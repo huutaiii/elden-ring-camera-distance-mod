@@ -35,4 +35,7 @@
   <ItemGroup>
     <None Include="..\.gitignore" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\ce_asm_snippet.txt" />
+  </ItemGroup>
 </Project>
