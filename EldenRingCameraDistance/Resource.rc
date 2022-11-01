@@ -1,0 +1,10 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+//1 TEXTINCLUDE  
+//BEGIN
+//    "resource.h\0"
+//END
+
+IDR_CONFIGFILE TEXTFILE "..\\doc\\config.ini"
