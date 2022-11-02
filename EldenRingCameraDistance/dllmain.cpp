@@ -83,20 +83,21 @@ void HookPivotInterp()
 {
     float interp_alpha = config.GetFloat("camera_interpolation", "interpolation_alpha", 0.f);
     ModUtils::Log("using interp_alpha = %f", interp_alpha);
-    interp_alpha *= interp_alpha;
     LerpAlpha = _mm_set_ss(interp_alpha);
     LerpOneMinusAlpha = _mm_set_ss(1.f - interp_alpha);
 
-    std::vector<uint16_t> bytes({ 0x0F, 0x28, 0x00, 0x66, 0x0F, 0x7F, 0x07, 0xF3, 0x0F, 0x10, 0xAB, 0x90, 0x01, 0x00, 0x00 });
+    std::vector<uint16_t> bytes({ 0xE8, 0xC3, 0x51, 0x9D, 0x00, 0x0F, 0x28, 0x00, 0x66, 0x0F, 0x7F, 0x07, 0xF3, 0x0F, 0x10, 0xAB, 0x90, 0x01, 0x00, 0x00 });
     uintptr_t hookAddress = ModUtils::SigScan(bytes);
     if (hookAddress)
     {
+        hookAddress += 5;
         uintptr_t toAddress = (uintptr_t)&CameraInterp;
         ModUtils::Log("Creating jump to %p", toAddress);
-        ModUtils::Replace(hookAddress, bytes, std::vector<uint8_t>(bytes.size(), 0x90));
+        //ModUtils::Replace(hookAddress, bytes, std::vector<uint8_t>(bytes.size(), 0x90));
+        ModUtils::MemSet(hookAddress, 0x90, 15);
         ModUtils::Replace(hookAddress, std::vector<uint16_t>(6, 0x90), {0xff, 0x25, 0, 0, 0, 0});
         ModUtils::MemCopy(hookAddress + (JMP_SIZE - 8), (uintptr_t)&toAddress, 8);
-        InterpReturn = hookAddress + JMP_SIZE;
+        InterpReturn = hookAddress + 14;
     }
 }
 

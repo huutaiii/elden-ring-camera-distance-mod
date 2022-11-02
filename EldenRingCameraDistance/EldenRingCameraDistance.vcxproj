@@ -161,6 +161,7 @@
     <MASM Include="camera.asm">
       <FileType>Document</FileType>
     </MASM>
+    <MASM Include="pivot.asm" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />
