@@ -38,7 +38,7 @@ std::string GetDefaultConfig()
     return std::string();
 }
 
-void LoadConfig()
+INIReader LoadConfig()
 {
     std::string configPath = ModUtils::GetModuleFolderPath() + "\\config.ini";
     INIReader reader(configPath);
@@ -69,11 +69,13 @@ void LoadConfig()
         ModUtils::Log("using offset = %f", offset);
         CameraDistanceAdd = _mm_set_ss(offset);
     }
+
+    return reader;
 }
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
-    LoadConfig();
+    INIReader config = LoadConfig();
     std::vector<uint16_t> original({ 0xF3, 0x0F, 0x11, 0xBB, 0xB8, 0x01 }); // movss [rbx + 1B8], xmm7 (2 MSBytes truncated)
     std::vector<uint8_t> replacement({ 0xFF, 0x25, 0x00, 0x00, 0x00, 0x00 }); // ff 25 00 00 00 00
     uintptr_t hookAddress = ModUtils::SigScan(original);
@@ -92,6 +94,36 @@ DWORD WINAPI MainThread(LPVOID lpParam)
     {
         ModUtils::RaiseError(ModUtils::GetModuleName() + ": Search failed. Nothing is modified.");
     }
+
+    if (config.GetBoolean("camera_interpolation", "disable_lag", false))
+    {
+        ModUtils::Log("Disabling camera lag");
+        if (config.GetBoolean("camera_interpolation", "disable_lag_alt", false) == false)
+        {
+            // cmp byte ptr [rbx+00000315], 00
+            // ; signature starts here
+            // je eldenring.exe+3B5726 
+            // xorps xmm1, xmm1
+            // movaps[rbx + 00000210], xmm1
+            std::vector<uint16_t> signature({ 0x74, 0x1E, 0x0F, 0x57, 0xC9, 0x0F, 0x29, 0x8B, 0x10, 0x02, 0x00, 0x00 });
+            uintptr_t hookAddress = ModUtils::SigScan(signature);
+            if (hookAddress)
+            {
+                // replace the jump with nop's
+                ModUtils::Replace(hookAddress, std::vector<uint16_t>({ 0x74, 0x1E }), std::vector<uint8_t>({ 0x90, 0x90 }));
+            }
+        }
+        else
+        {
+            std::vector<uint16_t> signature({ 0x66, 0x0F, 0x7F, 0x07, 0xF3, 0x0F, 0x10, 0xAB, 0x90, 0x01, 0x00, 0x00 });
+            uintptr_t hookAddress = ModUtils::SigScan(signature);
+            if (hookAddress)
+            {
+                ModUtils::Replace(hookAddress, {0x66, 0x0f, 0x7f, 0x07}, {0x90, 0x90, 0x90, 0x90});
+            }
+        }
+    }
+
     ModUtils::CloseLog();
     return 0;
 }

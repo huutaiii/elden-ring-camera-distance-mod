@@ -123,7 +123,7 @@
     </Link>
     <PostBuildEvent />
     <PostBuildEvent>
-      <Command>powershell.exe -File $(SolutionDir)install.ps1 -SolutionDir $(SolutionDir) -TargetName $(ProjectName) -Configuration $(ConfigurationName) -Platform $(PlatformName)</Command>
+      <Command>powershell.exe -File $(SolutionDir)install.ps1 -SolutionDir $(SolutionDir) -TargetName $(ProjectName) -Configuration $(ConfigurationName) -Platform $(PlatformName)  -DeleteConfig</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -145,7 +145,7 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe -File $(SolutionDir)install.ps1 -SolutionDir $(SolutionDir) -TargetName $(ProjectName) -Configuration $(ConfigurationName) -Platform $(PlatformName)</Command>
+      <Command>powershell.exe -File $(SolutionDir)install.ps1 -SolutionDir $(SolutionDir) -TargetName $(ProjectName) -Configuration $(ConfigurationName) -Platform $(PlatformName)  -DeleteConfig</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -172,6 +172,7 @@
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="..\doc\ce_asm_pivot_interpolation.txt" />
     <Text Include="..\doc\ce_asm_snippet.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
