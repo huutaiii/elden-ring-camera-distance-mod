@@ -121,6 +121,10 @@
       <EnableUAC>false</EnableUAC>
       <EmbedManagedResourceFile>%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
+    <PostBuildEvent />
+    <PostBuildEvent>
+      <Command>powershell.exe -File $(SolutionDir)install.ps1 -SolutionDir $(SolutionDir) -TargetName $(ProjectName) -Configuration $(ConfigurationName) -Platform $(PlatformName)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -130,7 +134,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;ELDENRINGCAMERADISTANCE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -140,6 +144,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <PostBuildEvent>
+      <Command>powershell.exe -File $(SolutionDir)install.ps1 -SolutionDir $(SolutionDir) -TargetName $(ProjectName) -Configuration $(ConfigurationName) -Platform $(PlatformName)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\include\INIReader.h" />
