@@ -173,6 +173,7 @@
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="..\doc\ce_asm_gamethread.txt" />
     <Text Include="..\doc\ce_asm_pivot_interpolation.txt" />
     <Text Include="..\doc\ce_asm_snippet.txt" />
   </ItemGroup>

@@ -80,13 +80,13 @@ eldenring.exe+3B575A - 48 89 44 24 28        - mov [rsp+28],rax
 eldenring.exe+3B575F - 48 89 7C 24 20        - mov [rsp+20],rdi
 eldenring.exe+3B5764 - 48 8D 55 D0           - lea rdx,[rbp-30]
 eldenring.exe+3B5768 - E8 C3519D00           - call eldenring.exe+D8A930
+eldenring.exe+3B576D - 0F28 00               - movaps xmm0,[rax]			; [rax] = interpolated position
+eldenring.exe+3B5770 - 66 0F7F 07            - movdqa [rdi],xmm0			; [rdi] <- interpolated position, NOP this since we're handling interpolation;
 												; hook starts here
-eldenring.exe+3B576D - 0F28 00               - movaps xmm0,[rax]
-eldenring.exe+3B5770 - 66 0F7F 07            - movdqa [rdi],xmm0				; [rdi] = interpolated position
 eldenring.exe+3B5774 - F3 0F10 AB 90010000   - movss xmm5,[rbx+00000190]
-												; hook ends here
 eldenring.exe+3B577C - 0FC6 ED 00            - shufps xmm5,xmm5,00 { 0 }
 eldenring.exe+3B5780 - F3 0F10 9B 94010000   - movss xmm3,[rbx+00000194]
+												; hook ends here
 eldenring.exe+3B5788 - 0FC6 DB 00            - shufps xmm3,xmm3,00 { 0 }
 eldenring.exe+3B578C - F3 0F10 A3 98010000   - movss xmm4,[rbx+00000198]
 eldenring.exe+3B5794 - 0FC6 E4 00            - shufps xmm4,xmm4,00 { 0 }

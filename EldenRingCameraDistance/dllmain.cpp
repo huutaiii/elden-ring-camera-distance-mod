@@ -25,6 +25,11 @@ extern "C"
     uintptr_t InterpReturn;
     __m128 LerpAlpha;
     __m128 LerpOneMinusAlpha;
+
+    void CameraInterpEnable();
+    void CameraInterpDisable();
+    uintptr_t InterpEnableReturn;
+    uintptr_t InterpDisableReturn;
 }
 
 std::string GetDefaultConfig()
@@ -79,26 +84,61 @@ void LoadConfig()
     config = reader;
 }
 
-void HookPivotInterp()
+bool HookPivotInterpCtrl()
+{
+    {
+        std::vector<uint16_t> bytes({ 0x4C, 0x63, 0x43, 0x48, 0x4D, 0x03, 0xC0, 0x48, 0x8B, 0x43, 0x10, 0x48, 0x8B, 0xD6, 0x48, 0x8B, 0xCB });
+        uintptr_t hookAddress = ModUtils::SigScan(bytes);
+        if (!hookAddress)
+        {
+            return false;
+        }
+        ModUtils::Log("Hooking CameraInterpDisable");
+        uintptr_t toAddress = (uintptr_t)&CameraInterpDisable;
+        ModUtils::MemCopy(toAddress, hookAddress, bytes.size());
+        ModUtils::Hook(hookAddress, toAddress, bytes.size() - 14);
+        InterpDisableReturn = hookAddress + bytes.size();
+    }
+
+    {
+        std::vector<uint16_t> bytes({ 0x48, 0x8B, 0xC4, 0x55, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57 });
+        uintptr_t hookAddress = ModUtils::SigScan(bytes);
+        if (!hookAddress)
+        {
+            return false;
+        }
+        ModUtils::Log("Hooking CameraInterpEnable");
+        uintptr_t toAddress = (uintptr_t)&CameraInterpEnable;
+        ModUtils::MemCopy(toAddress, hookAddress, bytes.size());
+        ModUtils::Hook(hookAddress, toAddress);
+        InterpEnableReturn = hookAddress + bytes.size();
+    }
+    return true;
+}
+
+bool HookPivotInterp()
 {
     float interp_alpha = config.GetFloat("camera_interpolation", "interpolation_alpha", 0.f);
     ModUtils::Log("using interp_alpha = %f", interp_alpha);
     LerpAlpha = _mm_set_ss(interp_alpha);
     LerpOneMinusAlpha = _mm_set_ss(1.f - interp_alpha);
 
-    std::vector<uint16_t> bytes({ 0xE8, 0xC3, 0x51, 0x9D, 0x00, 0x0F, 0x28, 0x00, 0x66, 0x0F, 0x7F, 0x07, 0xF3, 0x0F, 0x10, 0xAB, 0x90, 0x01, 0x00, 0x00 });
+    //std::vector<uint16_t> bytes({ 0xE8, 0xC3, 0x51, 0x9D, 0x00, 0x0F, 0x28, 0x00, 0x66, 0x0F, 0x7F, 0x07, 0xF3, 0x0F, 0x10, 0xAB, 0x90, 0x01, 0x00, 0x00 });
+    // 20 bytes
+    std::vector<uint16_t> bytes({0xF3, 0x0F, 0x10, 0xAB, 0x90, 0x01, 0x00, 0x00, 0x0F, 0xC6, 0xED, 0x00, 0xF3, 0x0F, 0x10, 0x9B, 0x94, 0x01, 0x00, 0x00});
     uintptr_t hookAddress = ModUtils::SigScan(bytes);
     if (hookAddress)
     {
-        hookAddress += 5;
         uintptr_t toAddress = (uintptr_t)&CameraInterp;
         ModUtils::Log("Creating jump to %p", toAddress);
         //ModUtils::Replace(hookAddress, bytes, std::vector<uint8_t>(bytes.size(), 0x90));
-        ModUtils::MemSet(hookAddress, 0x90, 15);
+        ModUtils::MemCopy(toAddress, hookAddress, 20);
+        ModUtils::MemSet(hookAddress - 4, 0x90, 24);
         ModUtils::Replace(hookAddress, std::vector<uint16_t>(6, 0x90), {0xff, 0x25, 0, 0, 0, 0});
         ModUtils::MemCopy(hookAddress + (JMP_SIZE - 8), (uintptr_t)&toAddress, 8);
-        InterpReturn = hookAddress + 14;
+        InterpReturn = hookAddress + 20;
     }
+    return hookAddress != 0;
 }
 
 DWORD WINAPI MainThread(LPVOID lpParam)
@@ -152,7 +192,13 @@ DWORD WINAPI MainThread(LPVOID lpParam)
         }
     }
 
-    HookPivotInterp();
+    if (config.GetBoolean("camera_interpolation", "use_interpolation", false))
+    {
+        //if (HookPivotInterpCtrl())
+        {
+            HookPivotInterp();
+        }
+    }
 
     ModUtils::CloseLog();
     return 0;

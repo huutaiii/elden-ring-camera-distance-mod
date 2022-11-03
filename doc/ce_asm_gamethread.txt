@@ -1,0 +1,1072 @@
+
+7FF6DA62350F - 80 48 8B C4           - or byte ptr [rax-75],-3C
+7FF6DA623513 - 56                    - push rsi
+7FF6DA623514 - 57                    - push rdi
+7FF6DA623515 - 41 56                 - push r14
+7FF6DA623517 - 48 83 EC 70           - sub rsp,70
+7FF6DA62351B - 48 C7 40 A0 FEFFFFFF  - mov qword ptr [rax-60],FFFFFFFFFFFFFFFE
+7FF6DA623523 - 48 89 58 18           - mov [rax+18],rbx
+7FF6DA623527 - 48 89 68 20           - mov [rax+20],rbp
+7FF6DA62352B - 48 8B 05 CE5F0C03     - mov rax,[7FF6DD6E9500]
+7FF6DA623532 - 48 33 C4              - xor rax,rsp
+7FF6DA623535 - 48 89 44 24 60        - mov [rsp+60],rax
+7FF6DA62353A - 48 8B F2              - mov rsi,rdx
+7FF6DA62353D - 48 8B D9              - mov rbx,rcx
+7FF6DA623540 - 45 33 F6              - xor r14d,r14d
+7FF6DA623543 - 41 8B FE              - mov edi,r14d
+7FF6DA623546 - 48 8D 2D 63A87402     - lea rbp,[7FF6DCD6DDB0]
+7FF6DA62354D - 0F1F 00               - nop dword ptr [rax]
+7FF6DA623550 - 48 63 43 4C           - movsxd  rax,dword ptr [rbx+4C]
+7FF6DA623554 - 89 43 48              - mov [rbx+48],eax
+7FF6DA623557 - 4C 39 73 60           - cmp [rbx+60],r14
+7FF6DA62355B - 74 2F                 - je 7FF6DA62358C
+7FF6DA62355D - 44 38 73 69           - cmp [rbx+69],r14l
+7FF6DA623561 - 74 29                 - je 7FF6DA62358C
+7FF6DA623563 - 83 F8 15              - cmp eax,15
+7FF6DA623566 - 77 18                 - ja 7FF6DA623580
+7FF6DA623568 - 48 8B C8              - mov rcx,rax
+7FF6DA62356B - 48 03 C9              - add rcx,rcx
+7FF6DA62356E - 48 8B 43 10           - mov rax,[rbx+10]
+7FF6DA623572 - 48 8B 4C C8 08        - mov rcx,[rax+rcx*8+08]
+7FF6DA623577 - 48 89 8B A0000000     - mov [rbx+000000A0],rcx
+7FF6DA62357E - EB 0C                 - jmp 7FF6DA62358C
+7FF6DA623580 - 83 F8 FF              - cmp eax,-01
+7FF6DA623583 - 75 07                 - jne 7FF6DA62358C
+7FF6DA623585 - 48 89 AB A0000000     - mov [rbx+000000A0],rbp
+7FF6DA62358C - 48 8B 03              - mov rax,[rbx]
+7FF6DA62358F - 48 8B CB              - mov rcx,rbx
+7FF6DA623592 - FF 50 20              - call qword ptr [rax+20]
+7FF6DA623595 - 84 C0                 - test al,al
+7FF6DA623597 - 0F85 90010000         - jne 7FF6DA62372D
+7FF6DA62359D - 48 8D 4B 18           - lea rcx,[rbx+18]
+7FF6DA6235A1 - 48 8B D6              - mov rdx,rsi
+7FF6DA6235A4 - E8 37E2B301           - call 7FF6DC1617E0
+7FF6DA6235A9 - 0FB6 53 69            - movzx edx,byte ptr [rbx+69]
+7FF6DA6235AD - 84 D2                 - test dl,dl
+7FF6DA6235AF - 74 1C                 - je 7FF6DA6235CD
+7FF6DA6235B1 - 44 38 B3 A8000000     - cmp [rbx+000000A8],r14l
+7FF6DA6235B8 - 74 13                 - je 7FF6DA6235CD
+7FF6DA6235BA - 8B 83 AC000000        - mov eax,[rbx+000000AC]
+7FF6DA6235C0 - 89 43 48              - mov [rbx+48],eax
+7FF6DA6235C3 - 89 43 4C              - mov [rbx+4C],eax
+7FF6DA6235C6 - 44 88 B3 A8000000     - mov [rbx+000000A8],r14l
+7FF6DA6235CD - 48 8B 4B 60           - mov rcx,[rbx+60]
+7FF6DA6235D1 - 48 85 C9              - test rcx,rcx
+7FF6DA6235D4 - 74 1C                 - je 7FF6DA6235F2
+7FF6DA6235D6 - 84 D2                 - test dl,dl
+7FF6DA6235D8 - 74 18                 - je 7FF6DA6235F2
+7FF6DA6235DA - 48 63 43 48           - movsxd  rax,dword ptr [rbx+48]
+7FF6DA6235DE - 83 F8 14              - cmp eax,14
+7FF6DA6235E1 - 77 0F                 - ja 7FF6DA6235F2
+7FF6DA6235E3 - 48 8D 14 81           - lea rdx,[rcx+rax*4]
+7FF6DA6235E7 - 8B 02                 - mov eax,[rdx]
+7FF6DA6235E9 - 83 F8 FF              - cmp eax,-01
+7FF6DA6235EC - 73 04                 - jae 7FF6DA6235F2
+7FF6DA6235EE - FF C0                 - inc eax
+7FF6DA6235F0 - 89 02                 - mov [rdx],eax
+; hook start
+7FF6DA6235F2 - 4C 63 43 48           - movsxd  r8,dword ptr [rbx+48]
+7FF6DA6235F6 - 4D 03 C0              - add r8,r8
+7FF6DA6235F9 - 48 8B 43 10           - mov rax,[rbx+10]
+7FF6DA6235FD - 48 8B D6              - mov rdx,rsi
+7FF6DA623600 - 48 8B CB              - mov rcx,rbx
+; hook end (17 bytes)
+7FF6DA623603 - 42 FF 14 C0           - call qword ptr [rax+r8*8]			; calls when not in title screen
+7FF6DA623607 - 48 63 43 4C           - movsxd  rax,dword ptr [rbx+4C]
+7FF6DA62360B - 89 43 48              - mov [rbx+48],eax
+7FF6DA62360E - 4C 39 73 60           - cmp [rbx+60],r14
+7FF6DA623612 - 74 2F                 - je 7FF6DA623643
+7FF6DA623614 - 44 38 73 69           - cmp [rbx+69],r14l
+7FF6DA623618 - 74 29                 - je 7FF6DA623643
+7FF6DA62361A - 83 F8 15              - cmp eax,15
+7FF6DA62361D - 77 18                 - ja 7FF6DA623637
+7FF6DA62361F - 48 8B C8              - mov rcx,rax
+7FF6DA623622 - 48 03 C9              - add rcx,rcx
+7FF6DA623625 - 48 8B 43 10           - mov rax,[rbx+10]
+7FF6DA623629 - 48 8B 4C C8 08        - mov rcx,[rax+rcx*8+08]
+7FF6DA62362E - 48 89 8B A0000000     - mov [rbx+000000A0],rcx
+7FF6DA623635 - EB 0C                 - jmp 7FF6DA623643
+7FF6DA623637 - 83 F8 FF              - cmp eax,-01
+7FF6DA62363A - 75 07                 - jne 7FF6DA623643
+7FF6DA62363C - 48 89 AB A0000000     - mov [rbx+000000A0],rbp
+7FF6DA623643 - FF C7                 - inc edi
+7FF6DA623645 - 44 38 73 50           - cmp [rbx+50],r14l
+7FF6DA623649 - 0F84 DE000000         - je 7FF6DA62372D
+7FF6DA62364F - 81 FF 80000000        - cmp edi,00000080
+7FF6DA623655 - 73 09                 - jae 7FF6DA623660
+7FF6DA623657 - 44 88 73 50           - mov [rbx+50],r14l
+7FF6DA62365B - E9 F0FEFFFF           - jmp 7FF6DA623550
+7FF6DA623660 - 48 8B 0D F93AA803     - mov rcx,[7FF6DE0A7160]
+7FF6DA623667 - 48 85 C9              - test rcx,rcx
+7FF6DA62366A - 75 0F                 - jne 7FF6DA62367B
+7FF6DA62366C - E8 1F703B01           - call 7FF6DB9DA690
+7FF6DA623671 - 48 8B C8              - mov rcx,rax
+7FF6DA623674 - 48 89 05 E53AA803     - mov [7FF6DE0A7160],rax
+7FF6DA62367B - 48 89 4C 24 30        - mov [rsp+30],rcx
+7FF6DA623680 - 48 8B 01              - mov rax,[rcx]
+7FF6DA623683 - 45 33 C0              - xor r8d,r8d
+7FF6DA623686 - 48 8D 54 24 20        - lea rdx,[rsp+20]
+7FF6DA62368B - FF 50 18              - call qword ptr [rax+18]
+7FF6DA62368E - 8B 08                 - mov ecx,[rax]
+7FF6DA623690 - C1 E9 05              - shr ecx,05
+7FF6DA623693 - F6 C1 01              - test cl,01
+7FF6DA623696 - 75 13                 - jne 7FF6DA6236AB
+7FF6DA623698 - 4C 8D 05 312B5602     - lea r8,[7FF6DCB861D0]
+7FF6DA62369F - BA 3E000000           - mov edx,0000003E
+7FF6DA6236A4 - 33 C9                 - xor ecx,ecx
+7FF6DA6236A6 - E8 751C3A01           - call 7FF6DB9C5320
+7FF6DA6236AB - 4C 89 74 24 48        - mov [rsp+48],r14
+7FF6DA6236B0 - 4C 89 74 24 50        - mov [rsp+50],r14
+7FF6DA6236B5 - 48 C7 44 24 50 07000000 - mov qword ptr [rsp+50],00000007
+7FF6DA6236BE - 4C 89 74 24 48        - mov [rsp+48],r14
+7FF6DA6236C3 - 66 44 89 74 24 38     - mov [rsp+38],r14w
+7FF6DA6236C9 - C6 44 24 58 01        - mov byte ptr [rsp+58],01
+7FF6DA6236CE - 48 8D 15 7BF3E901     - lea rdx,[7FF6DC4C2A50]
+7FF6DA6236D5 - 48 8D 4C 24 30        - lea rcx,[rsp+30]
+7FF6DA6236DA - E8 112E69FF           - call 7FF6D9CB64F0
+7FF6DA6236DF - 48 8D 54 24 38        - lea rdx,[rsp+38]
+7FF6DA6236E4 - 48 83 7C 24 50 08     - cmp qword ptr [rsp+50],08
+7FF6DA6236EA - 48 0F43 54 24 38      - cmovae rdx,[rsp+38]
+7FF6DA6236F0 - B9 016D7C4D           - mov ecx,4D7C6D01
+7FF6DA6236F5 - E8 56E5B301           - call 7FF6DC161C50
+7FF6DA6236FA - 90                    - nop 
+7FF6DA6236FB - 48 83 7C 24 50 08     - cmp qword ptr [rsp+50],08
+7FF6DA623701 - 72 10                 - jb 7FF6DA623713
+7FF6DA623703 - 48 8B 4C 24 30        - mov rcx,[rsp+30]
+7FF6DA623708 - 48 8B 01              - mov rax,[rcx]
+7FF6DA62370B - 48 8B 54 24 38        - mov rdx,[rsp+38]
+7FF6DA623710 - FF 50 68              - call qword ptr [rax+68]
+7FF6DA623713 - 48 C7 44 24 50 07000000 - mov qword ptr [rsp+50],00000007
+7FF6DA62371C - 4C 89 74 24 48        - mov [rsp+48],r14
+7FF6DA623721 - 66 44 89 74 24 38     - mov [rsp+38],r14w
+7FF6DA623727 - C6 43 50 00           - mov byte ptr [rbx+50],00
+7FF6DA62372B - EB 04                 - jmp 7FF6DA623731
+7FF6DA62372D - 44 88 73 50           - mov [rbx+50],r14l
+7FF6DA623731 - 48 8B 4C 24 60        - mov rcx,[rsp+60]
+7FF6DA623736 - 48 33 CC              - xor rcx,rsp
+7FF6DA623739 - E8 A2139E01           - call 7FF6DC004AE0
+7FF6DA62373E - 4C 8D 5C 24 70        - lea r11,[rsp+70]
+7FF6DA623743 - 49 8B 5B 30           - mov rbx,[r11+30]
+7FF6DA623747 - 49 8B 6B 38           - mov rbp,[r11+38]
+7FF6DA62374B - 49 8B E3              - mov rsp,r11
+7FF6DA62374E - 41 5E                 - pop r14
+7FF6DA623750 - 5F                    - pop rdi
+7FF6DA623751 - 5E                    - pop rsi
+7FF6DA623752 - C3                    - ret 
+
+
+7FF6DA6261B6 - 22 8B AC8D77E1        - and cl,[rbx-1E887254]
+7FF6DA6261BC - 2B EE                 - sub ebp,esi
+7FF6DA6261BE - E3 AB                 - jecxz 7FF6DA62616B
+; hook starts here
+7FF6DA6261C0 - 48 8B C4              - mov rax,rsp							; line 72 calls here when ingame
+7FF6DA6261C3 - 55                    - push rbp
+7FF6DA6261C4 - 56                    - push rsi
+7FF6DA6261C5 - 57                    - push rdi
+7FF6DA6261C6 - 41 54                 - push r12
+7FF6DA6261C8 - 41 55                 - push r13
+7FF6DA6261CA - 41 56                 - push r14
+7FF6DA6261CC - 41 57                 - push r15
+; hook ends (14 bytes)
+7FF6DA6261CE - 48 8D 68 A1           - lea rbp,[rax-5F]
+7FF6DA6261D2 - 48 81 EC D0000000     - sub rsp,000000D0
+7FF6DA6261D9 - 48 C7 45 A7 FEFFFFFF  - mov qword ptr [rbp-59],FFFFFFFFFFFFFFFE
+7FF6DA6261E1 - 48 89 58 18           - mov [rax+18],rbx
+7FF6DA6261E5 - 0F29 70 B8            - movaps [rax-48],xmm6
+7FF6DA6261E9 - 0F29 78 A8            - movaps [rax-58],xmm7
+7FF6DA6261ED - 44 0F29 40 98         - movaps [rax-68],xmm8
+7FF6DA6261F2 - 44 0F29 48 88         - movaps [rax-78],xmm9
+7FF6DA6261F7 - 44 0F29 90 78FFFFFF   - movaps [rax-00000088],xmm10
+7FF6DA6261FF - 48 8B 05 FA320C03     - mov rax,[7FF6DD6E9500]
+7FF6DA626206 - 48 33 C4              - xor rax,rsp
+7FF6DA626209 - 48 89 45 CF           - mov [rbp-31],rax
+7FF6DA62620D - 4C 8B FA              - mov r15,rdx
+7FF6DA626210 - 48 8B D9              - mov rbx,rcx
+7FF6DA626213 - 33 FF                 - xor edi,edi
+7FF6DA626215 - 89 7D 87              - mov [rbp-79],edi
+7FF6DA626218 - 0F57 FF               - xorps xmm7,xmm7
+7FF6DA62621B - F3 0F10 05 C5F71C03   - movss xmm0,[7FF6DD7F59E8]
+7FF6DA626223 - 0F2E C7               - ucomiss xmm0,xmm7
+7FF6DA626226 - 7A 16                 - jp 7FF6DA62623E
+7FF6DA626228 - 75 14                 - jne 7FF6DA62623E
+7FF6DA62622A - B9 91330000           - mov ecx,00003391
+7FF6DA62622F - E8 DC2D2D00           - call 7FF6DA8F9010
+7FF6DA626234 - F3 0F11 05 ACF71C03   - movss [7FF6DD7F59E8],xmm0
+7FF6DA62623C - EB 1E                 - jmp 7FF6DA62625C
+7FF6DA62623E - F3 0F5C 42 08         - subss xmm0,[rdx+08]
+7FF6DA626243 - F3 0F11 05 9DF71C03   - movss [7FF6DD7F59E8],xmm0
+7FF6DA62624B - 0F2F F8               - comiss xmm7,xmm0
+7FF6DA62624E - 72 0C                 - jb 7FF6DA62625C
+7FF6DA626250 - 48 8D 15 91F71C03     - lea rdx,[7FF6DD7F59E8]
+7FF6DA626257 - E8 14A30000           - call 7FF6DA630570
+7FF6DA62625C - 48 8B 0D 9D101D03     - mov rcx,[7FF6DD7F7300]
+7FF6DA626263 - 48 85 C9              - test rcx,rcx
+7FF6DA626266 - 75 2E                 - jne 7FF6DA626296
+7FF6DA626268 - 48 8D 0D 427F1C03     - lea rcx,[7FF6DD7EE1B1]
+7FF6DA62626F - E8 EC6C3A01           - call 7FF6DB9CCF60
+7FF6DA626274 - 4C 8B C8              - mov r9,rax
+7FF6DA626277 - 4C 8D 05 B2587402     - lea r8,[7FF6DCD6BB30]
+7FF6DA62627E - BA B4000000           - mov edx,000000B4
+7FF6DA626283 - 48 8D 0D 9617E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA62628A - E8 91F03901           - call 7FF6DB9C5320
+7FF6DA62628F - 48 8B 0D 6A101D03     - mov rcx,[7FF6DD7F7300]
+7FF6DA626296 - 41 B8 03000000        - mov r8d,00000003
+7FF6DA62629C - 48 8D 55 BF           - lea rdx,[rbp-41]
+7FF6DA6262A0 - E8 4B310400           - call 7FF6DA6693F0
+7FF6DA6262A5 - 0F2F 78 0C            - comiss xmm7,[rax+0C]
+7FF6DA6262A9 - 0F93 C0               - setae al
+7FF6DA6262AC - 84 C0                 - test al,al
+7FF6DA6262AE - 0F84 92000000         - je 7FF6DA626346
+7FF6DA6262B4 - 48 8B 0D 45101D03     - mov rcx,[7FF6DD7F7300]
+7FF6DA6262BB - 48 85 C9              - test rcx,rcx
+7FF6DA6262BE - 75 2E                 - jne 7FF6DA6262EE
+7FF6DA6262C0 - 48 8D 0D EA7E1C03     - lea rcx,[7FF6DD7EE1B1]
+7FF6DA6262C7 - E8 946C3A01           - call 7FF6DB9CCF60
+7FF6DA6262CC - 4C 8B C8              - mov r9,rax
+7FF6DA6262CF - 4C 8D 05 5A587402     - lea r8,[7FF6DCD6BB30]
+7FF6DA6262D6 - BA B4000000           - mov edx,000000B4
+7FF6DA6262DB - 48 8D 0D 3E17E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA6262E2 - E8 39F03901           - call 7FF6DB9C5320
+7FF6DA6262E7 - 48 8B 0D 12101D03     - mov rcx,[7FF6DD7F7300]
+7FF6DA6262EE - 41 B8 02000000        - mov r8d,00000002
+7FF6DA6262F4 - 48 8D 55 BF           - lea rdx,[rbp-41]
+7FF6DA6262F8 - E8 F3300400           - call 7FF6DA6693F0
+7FF6DA6262FD - 0F2F 78 0C            - comiss xmm7,[rax+0C]
+7FF6DA626301 - 0F93 C0               - setae al
+7FF6DA626304 - 84 C0                 - test al,al
+7FF6DA626306 - 74 3E                 - je 7FF6DA626346
+7FF6DA626308 - 48 8B 05 81911D03     - mov rax,[7FF6DD7FF490]
+7FF6DA62630F - 48 85 C0              - test rax,rax
+7FF6DA626312 - 75 2E                 - jne 7FF6DA626342
+7FF6DA626314 - 48 8D 0D 1EA71B03     - lea rcx,[7FF6DD7E0A39]
+7FF6DA62631B - E8 406C3A01           - call 7FF6DB9CCF60
+7FF6DA626320 - 4C 8B C8              - mov r9,rax
+7FF6DA626323 - 4C 8D 05 06587402     - lea r8,[7FF6DCD6BB30]
+7FF6DA62632A - BA B4000000           - mov edx,000000B4
+7FF6DA62632F - 48 8D 0D EA16E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626336 - E8 E5EF3901           - call 7FF6DB9C5320
+7FF6DA62633B - 48 8B 05 4E911D03     - mov rax,[7FF6DD7FF490]
+7FF6DA626342 - 40 88 78 1E           - mov [rax+1E],dil
+7FF6DA626346 - 8B 0D 344FA903        - mov ecx,[7FF6DE0BB280]
+7FF6DA62634C - 65 48 8B 04 25 58000000  - mov rax,gs:[00000058]
+7FF6DA626355 - 41 BD 20000000        - mov r13d,00000020
+7FF6DA62635B - 4C 8B 24 C8           - mov r12,[rax+rcx*8]
+7FF6DA62635F - F3 44 0F10 15 204BE901  - movss xmm10,[7FF6DC4BAE88]
+7FF6DA626368 - F3 0F10 35 481EF201   - movss xmm6,[7FF6DC5481B8]
+7FF6DA626370 - 43 8B 04 2C           - mov eax,[r12+r13]
+7FF6DA626374 - 39 05 76F61C03        - cmp [7FF6DD7F59F0],eax
+7FF6DA62637A - 7E 3D                 - jle 7FF6DA6263B9
+7FF6DA62637C - 48 8D 0D 6DF61C03     - lea rcx,[7FF6DD7F59F0]
+7FF6DA626383 - E8 80E99D01           - call 7FF6DC004D08
+7FF6DA626388 - 83 3D 61F61C03 FF     - cmp dword ptr [7FF6DD7F59F0],-01
+7FF6DA62638F - 75 28                 - jne 7FF6DA6263B9
+7FF6DA626391 - E8 4A5074FF           - call 7FF6D9D6B3E0
+7FF6DA626396 - 41 0F28 D2            - movaps xmm2,xmm10
+7FF6DA62639A - 0F28 CE               - movaps xmm1,xmm6
+7FF6DA62639D - 48 8B C8              - mov rcx,rax
+7FF6DA6263A0 - E8 CB333000           - call 7FF6DA929770
+7FF6DA6263A5 - F3 0F11 05 3FF61C03   - movss [7FF6DD7F59EC],xmm0
+7FF6DA6263AD - 48 8D 0D 3CF61C03     - lea rcx,[7FF6DD7F59F0]
+7FF6DA6263B4 - E8 EFE89D01           - call 7FF6DC004CA8
+7FF6DA6263B9 - F3 0F10 05 2BF61C03   - movss xmm0,[7FF6DD7F59EC]
+7FF6DA6263C1 - F3 41 0F5C 47 08      - subss xmm0,[r15+08]
+7FF6DA6263C7 - F3 0F11 05 1DF61C03   - movss [7FF6DD7F59EC],xmm0
+7FF6DA6263CF - 0F2F F8               - comiss xmm7,xmm0
+7FF6DA6263D2 - 73 06                 - jae 7FF6DA6263DA
+7FF6DA6263D4 - 41 0F2F C2            - comiss xmm0,xmm10
+7FF6DA6263D8 - 76 0F                 - jna 7FF6DA6263E9
+7FF6DA6263DA - 48 8D 15 0BF61C03     - lea rdx,[7FF6DD7F59EC]
+7FF6DA6263E1 - 48 8B CB              - mov rcx,rbx
+7FF6DA6263E4 - E8 C7A00000           - call 7FF6DA6304B0
+7FF6DA6263E9 - 43 8B 04 2C           - mov eax,[r12+r13]
+7FF6DA6263ED - 39 05 05F61C03        - cmp [7FF6DD7F59F8],eax
+7FF6DA6263F3 - 7E 3D                 - jle 7FF6DA626432
+7FF6DA6263F5 - 48 8D 0D FCF51C03     - lea rcx,[7FF6DD7F59F8]
+7FF6DA6263FC - E8 07E99D01           - call 7FF6DC004D08
+7FF6DA626401 - 83 3D F0F51C03 FF     - cmp dword ptr [7FF6DD7F59F8],-01
+7FF6DA626408 - 75 28                 - jne 7FF6DA626432
+7FF6DA62640A - E8 D14F74FF           - call 7FF6D9D6B3E0
+7FF6DA62640F - 41 0F28 D2            - movaps xmm2,xmm10
+7FF6DA626413 - 0F28 CE               - movaps xmm1,xmm6
+7FF6DA626416 - 48 8B C8              - mov rcx,rax
+7FF6DA626419 - E8 52333000           - call 7FF6DA929770
+7FF6DA62641E - F3 0F11 05 CEF51C03   - movss [7FF6DD7F59F4],xmm0
+7FF6DA626426 - 48 8D 0D CBF51C03     - lea rcx,[7FF6DD7F59F8]
+7FF6DA62642D - E8 76E89D01           - call 7FF6DC004CA8
+7FF6DA626432 - F3 0F10 05 BAF51C03   - movss xmm0,[7FF6DD7F59F4]
+7FF6DA62643A - F3 41 0F5C 47 08      - subss xmm0,[r15+08]
+7FF6DA626440 - F3 0F11 05 ACF51C03   - movss [7FF6DD7F59F4],xmm0
+7FF6DA626448 - 0F2F F8               - comiss xmm7,xmm0
+7FF6DA62644B - 73 06                 - jae 7FF6DA626453
+7FF6DA62644D - 41 0F2F C2            - comiss xmm0,xmm10
+7FF6DA626451 - 76 0F                 - jna 7FF6DA626462
+7FF6DA626453 - 48 8D 15 9AF51C03     - lea rdx,[7FF6DD7F59F4]
+7FF6DA62645A - 48 8B CB              - mov rcx,rbx
+7FF6DA62645D - E8 7EA00000           - call 7FF6DA6304E0
+7FF6DA626462 - 48 8B 05 17891C03     - mov rax,[7FF6DD7EED80]
+7FF6DA626469 - 48 85 C0              - test rax,rax
+7FF6DA62646C - 74 04                 - je 7FF6DA626472
+7FF6DA62646E - C6 40 44 01           - mov byte ptr [rax+44],01
+7FF6DA626472 - 48 8B 05 87891C03     - mov rax,[7FF6DD7EEE00]
+7FF6DA626479 - 48 85 C0              - test rax,rax
+7FF6DA62647C - 74 07                 - je 7FF6DA626485
+7FF6DA62647E - C6 80 F4000000 01     - mov byte ptr [rax+000000F4],01
+7FF6DA626485 - 48 8B 05 34E21C03     - mov rax,[7FF6DD7F46C0]
+7FF6DA62648C - 48 85 C0              - test rax,rax
+7FF6DA62648F - 75 2E                 - jne 7FF6DA6264BF
+7FF6DA626491 - 48 8D 0D 5B691C03     - lea rcx,[7FF6DD7ECDF3]
+7FF6DA626498 - E8 C36A3A01           - call 7FF6DB9CCF60
+7FF6DA62649D - 4C 8B C8              - mov r9,rax
+7FF6DA6264A0 - 4C 8D 05 89567402     - lea r8,[7FF6DCD6BB30]
+7FF6DA6264A7 - BA B4000000           - mov edx,000000B4
+7FF6DA6264AC - 48 8D 0D 6D15E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA6264B3 - E8 68EE3901           - call 7FF6DB9C5320
+7FF6DA6264B8 - 48 8B 05 01E21C03     - mov rax,[7FF6DD7F46C0]
+7FF6DA6264BF - C6 40 18 01           - mov byte ptr [rax+18],01
+7FF6DA6264C3 - 48 8B 0D BEA71B03     - mov rcx,[7FF6DD7E0C88]
+7FF6DA6264CA - 48 85 C9              - test rcx,rcx
+7FF6DA6264CD - 75 26                 - jne 7FF6DA6264F5
+7FF6DA6264CF - 4C 8D 0D 928BE901     - lea r9,[7FF6DC4BF068]
+7FF6DA6264D6 - 4C 8D 05 53567402     - lea r8,[7FF6DCD6BB30]
+7FF6DA6264DD - BA AA000000           - mov edx,000000AA
+7FF6DA6264E2 - 48 8D 0D 778CE901     - lea rcx,[7FF6DC4BF160]
+7FF6DA6264E9 - E8 32EE3901           - call 7FF6DB9C5320
+7FF6DA6264EE - 48 8B 0D 93A71B03     - mov rcx,[7FF6DD7E0C88]
+7FF6DA6264F5 - E8 B685B301           - call 7FF6DC15EAB0
+7FF6DA6264FA - 48 8B 0D 87A71B03     - mov rcx,[7FF6DD7E0C88]
+7FF6DA626501 - 48 85 C9              - test rcx,rcx
+7FF6DA626504 - 75 26                 - jne 7FF6DA62652C
+7FF6DA626506 - 4C 8D 0D 5B8BE901     - lea r9,[7FF6DC4BF068]
+7FF6DA62650D - 4C 8D 05 1C567402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626514 - BA AA000000           - mov edx,000000AA
+7FF6DA626519 - 48 8D 0D 408CE901     - lea rcx,[7FF6DC4BF160]
+7FF6DA626520 - E8 FBED3901           - call 7FF6DB9C5320
+7FF6DA626525 - 48 8B 0D 5CA71B03     - mov rcx,[7FF6DD7E0C88]
+7FF6DA62652C - E8 4F9576FF           - call 7FF6D9D8FA80
+7FF6DA626531 - E8 EA84BDFF           - call 7FF6DA1FEA20
+7FF6DA626536 - C6 80 24010000 01     - mov byte ptr [rax+00000124],01
+7FF6DA62653D - 48 8B 0D 14051C03     - mov rcx,[7FF6DD7E6A58]
+7FF6DA626544 - 48 85 C9              - test rcx,rcx
+7FF6DA626547 - 75 2E                 - jne 7FF6DA626577
+7FF6DA626549 - 48 8D 0D 84051C03     - lea rcx,[7FF6DD7E6AD4]
+7FF6DA626550 - E8 0B6A3A01           - call 7FF6DB9CCF60
+7FF6DA626555 - 4C 8B C8              - mov r9,rax
+7FF6DA626558 - 4C 8D 05 D1557402     - lea r8,[7FF6DCD6BB30]
+7FF6DA62655F - BA B4000000           - mov edx,000000B4
+7FF6DA626564 - 48 8D 0D B514E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA62656B - E8 B0ED3901           - call 7FF6DB9C5320
+7FF6DA626570 - 48 8B 0D E1041C03     - mov rcx,[7FF6DD7E6A58]
+7FF6DA626577 - E8 D49C81FF           - call 7FF6D9E40250
+7FF6DA62657C - F3 0F10 83 70020000   - movss xmm0,[rbx+00000270]
+7FF6DA626584 - F3 44 0F10 0D EB107502  - movss xmm9,[7FF6DCD77678]
+7FF6DA62658D - 0F2F C7               - comiss xmm0,xmm7
+7FF6DA626590 - 0F86 05020000         - jbe 7FF6DA62679B
+7FF6DA626596 - 48 8B 0D 630D1D03     - mov rcx,[7FF6DD7F7300]
+7FF6DA62659D - 48 85 C9              - test rcx,rcx
+7FF6DA6265A0 - 75 2E                 - jne 7FF6DA6265D0
+7FF6DA6265A2 - 48 8D 0D 087C1C03     - lea rcx,[7FF6DD7EE1B1]
+7FF6DA6265A9 - E8 B2693A01           - call 7FF6DB9CCF60
+7FF6DA6265AE - 4C 8B C8              - mov r9,rax
+7FF6DA6265B1 - 4C 8D 05 78557402     - lea r8,[7FF6DCD6BB30]
+7FF6DA6265B8 - BA B4000000           - mov edx,000000B4
+7FF6DA6265BD - 48 8D 0D 5C14E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA6265C4 - E8 57ED3901           - call 7FF6DB9C5320
+7FF6DA6265C9 - 48 8B 0D 300D1D03     - mov rcx,[7FF6DD7F7300]
+7FF6DA6265D0 - 41 B8 03000000        - mov r8d,00000003
+7FF6DA6265D6 - 48 8D 55 BF           - lea rdx,[rbp-41]
+7FF6DA6265DA - E8 112E0400           - call 7FF6DA6693F0
+7FF6DA6265DF - 44 0F2F 48 0C         - comiss xmm9,[rax+0C]
+7FF6DA6265E4 - 0F97 C0               - seta al
+7FF6DA6265E7 - 84 C0                 - test al,al
+7FF6DA6265E9 - 74 16                 - je 7FF6DA626601
+7FF6DA6265EB - F3 0F10 83 70020000   - movss xmm0,[rbx+00000270]
+7FF6DA6265F3 - F3 41 0F5C 47 08      - subss xmm0,[r15+08]
+7FF6DA6265F9 - F3 0F11 83 70020000   - movss [rbx+00000270],xmm0
+7FF6DA626601 - F3 0F10 83 70020000   - movss xmm0,[rbx+00000270]
+7FF6DA626609 - 48 8B 0D 78241E03     - mov rcx,[7FF6DD808A88]
+7FF6DA626610 - 0F2F C7               - comiss xmm0,xmm7
+7FF6DA626613 - 0F86 A5000000         - jbe 7FF6DA6266BE
+7FF6DA626619 - 48 85 C9              - test rcx,rcx
+7FF6DA62661C - 75 2E                 - jne 7FF6DA62664C
+7FF6DA62661E - 48 8D 0D 44A31B03     - lea rcx,[7FF6DD7E0969]
+7FF6DA626625 - E8 36693A01           - call 7FF6DB9CCF60
+7FF6DA62662A - 4C 8B C8              - mov r9,rax
+7FF6DA62662D - 4C 8D 05 FC547402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626634 - BA B4000000           - mov edx,000000B4
+7FF6DA626639 - 48 8D 0D E013E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626640 - E8 DBEC3901           - call 7FF6DB9C5320
+7FF6DA626645 - 48 8B 0D 3C241E03     - mov rcx,[7FF6DD808A88]
+7FF6DA62664C - F3 0F10 15 C8107502   - movss xmm2,[7FF6DCD7771C]
+7FF6DA626654 - 0F28 CF               - movaps xmm1,xmm7
+7FF6DA626657 - E8 041F2A00           - call 7FF6DA8C8560
+7FF6DA62665C - BA 08000000           - mov edx,00000008
+7FF6DA626661 - 48 8D 4D BF           - lea rcx,[rbp-41]
+7FF6DA626665 - E8 662A70FF           - call 7FF6D9D290D0
+7FF6DA62666A - 0F10 00               - movups xmm0,[rax]
+7FF6DA62666D - 0F11 45 AF            - movups [rbp-51],xmm0
+7FF6DA626671 - 48 8B 0D 880C1D03     - mov rcx,[7FF6DD7F7300]
+7FF6DA626678 - 48 85 C9              - test rcx,rcx
+7FF6DA62667B - 75 2E                 - jne 7FF6DA6266AB
+7FF6DA62667D - 48 8D 0D 2D7B1C03     - lea rcx,[7FF6DD7EE1B1]
+7FF6DA626684 - E8 D7683A01           - call 7FF6DB9CCF60
+7FF6DA626689 - 4C 8B C8              - mov r9,rax
+7FF6DA62668C - 4C 8D 05 9D547402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626693 - BA B4000000           - mov edx,000000B4
+7FF6DA626698 - 48 8D 0D 8113E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA62669F - E8 7CEC3901           - call 7FF6DB9C5320
+7FF6DA6266A4 - 48 8B 0D 550C1D03     - mov rcx,[7FF6DD7F7300]
+7FF6DA6266AB - 4C 8D 45 AF           - lea r8,[rbp-51]
+7FF6DA6266AF - BA 02000000           - mov edx,00000002
+7FF6DA6266B4 - E8 E72E0400           - call 7FF6DA6695A0
+7FF6DA6266B9 - E9 E4000000           - jmp 7FF6DA6267A2
+7FF6DA6266BE - 48 85 C9              - test rcx,rcx
+7FF6DA6266C1 - 75 2E                 - jne 7FF6DA6266F1
+7FF6DA6266C3 - 48 8D 0D 9FA21B03     - lea rcx,[7FF6DD7E0969]
+7FF6DA6266CA - E8 91683A01           - call 7FF6DB9CCF60
+7FF6DA6266CF - 4C 8B C8              - mov r9,rax
+7FF6DA6266D2 - 4C 8D 05 57547402     - lea r8,[7FF6DCD6BB30]
+7FF6DA6266D9 - BA B4000000           - mov edx,000000B4
+7FF6DA6266DE - 48 8D 0D 3B13E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA6266E5 - E8 36EC3901           - call 7FF6DB9C5320
+7FF6DA6266EA - 48 8B 0D 97231E03     - mov rcx,[7FF6DD808A88]
+7FF6DA6266F1 - 0F28 D7               - movaps xmm2,xmm7
+7FF6DA6266F4 - 41 0F28 C9            - movaps xmm1,xmm9
+7FF6DA6266F8 - E8 631E2A00           - call 7FF6DA8C8560
+7FF6DA6266FD - 33 D2                 - xor edx,edx
+7FF6DA6266FF - 48 8D 4D 8F           - lea rcx,[rbp-71]
+7FF6DA626703 - E8 C82970FF           - call 7FF6D9D290D0
+7FF6DA626708 - 0F10 00               - movups xmm0,[rax]
+7FF6DA62670B - 0F11 45 BF            - movups [rbp-41],xmm0
+7FF6DA62670F - 48 8D 35 8226E901     - lea rsi,[7FF6DC4B8D98]
+7FF6DA626716 - 48 89 75 AF           - mov [rbp-51],rsi
+7FF6DA62671A - C7 45 B7 00000000     - mov [rbp-49],00000000
+7FF6DA626721 - 4C 8D 35 8026E901     - lea r14,[7FF6DC4B8DA8]
+7FF6DA626728 - 4C 89 75 AF           - mov [rbp-51],r14
+7FF6DA62672C - F3 0F10 05 2C0F7502   - movss xmm0,[7FF6DCD77660]
+7FF6DA626734 - F3 0F11 45 B7         - movss [rbp-49],xmm0
+7FF6DA626739 - 48 8B 0D C00B1D03     - mov rcx,[7FF6DD7F7300]
+7FF6DA626740 - 48 85 C9              - test rcx,rcx
+7FF6DA626743 - 75 2E                 - jne 7FF6DA626773
+7FF6DA626745 - 48 8D 0D 657A1C03     - lea rcx,[7FF6DD7EE1B1]
+7FF6DA62674C - E8 0F683A01           - call 7FF6DB9CCF60
+7FF6DA626751 - 4C 8B C8              - mov r9,rax
+7FF6DA626754 - 4C 8D 05 D5537402     - lea r8,[7FF6DCD6BB30]
+7FF6DA62675B - BA B4000000           - mov edx,000000B4
+7FF6DA626760 - 48 8D 0D B912E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626767 - E8 B4EB3901           - call 7FF6DB9C5320
+7FF6DA62676C - 48 8B 0D 8D0B1D03     - mov rcx,[7FF6DD7F7300]
+7FF6DA626773 - C6 44 24 20 00        - mov byte ptr [rsp+20],00
+7FF6DA626778 - 4C 8D 4D AF           - lea r9,[rbp-51]
+7FF6DA62677C - 4C 8D 45 BF           - lea r8,[rbp-41]
+7FF6DA626780 - BA 02000000           - mov edx,00000002
+7FF6DA626785 - E8 F62E0400           - call 7FF6DA669680
+7FF6DA62678A - 90                    - nop 
+7FF6DA62678B - 4C 89 75 AF           - mov [rbp-51],r14
+7FF6DA62678F - 48 89 75 AF           - mov [rbp-51],rsi
+7FF6DA626793 - 89 BB 70020000        - mov [rbx+00000270],edi
+7FF6DA626799 - EB 07                 - jmp 7FF6DA6267A2
+7FF6DA62679B - C6 05 6FF01C03 01     - mov byte ptr [7FF6DD7F5811],01
+7FF6DA6267A2 - 8B 8B 00010000        - mov ecx,[rbx+00000100]
+7FF6DA6267A8 - 85 C9                 - test ecx,ecx
+7FF6DA6267AA - 0F9E C0               - setle al
+7FF6DA6267AD - 88 83 AA040000        - mov [rbx+000004AA],al
+7FF6DA6267B3 - 83 E9 01              - sub ecx,01
+7FF6DA6267B6 - 0F48 CF               - cmovs ecx,edi
+7FF6DA6267B9 - 89 8B 00010000        - mov [rbx+00000100],ecx
+7FF6DA6267BF - F3 0F10 35 C546E901   - movss xmm6,[7FF6DC4BAE8C]
+7FF6DA6267C7 - 43 8B 04 2C           - mov eax,[r12+r13]
+7FF6DA6267CB - 39 05 2FF21C03        - cmp [7FF6DD7F5A00],eax
+7FF6DA6267D1 - 7E 3D                 - jle 7FF6DA626810
+7FF6DA6267D3 - 48 8D 0D 26F21C03     - lea rcx,[7FF6DD7F5A00]
+7FF6DA6267DA - E8 29E59D01           - call 7FF6DC004D08
+7FF6DA6267DF - 83 3D 1AF21C03 FF     - cmp dword ptr [7FF6DD7F5A00],-01
+7FF6DA6267E6 - 75 28                 - jne 7FF6DA626810
+7FF6DA6267E8 - E8 F34B74FF           - call 7FF6D9D6B3E0
+7FF6DA6267ED - 0F28 D6               - movaps xmm2,xmm6
+7FF6DA6267F0 - 41 0F28 CA            - movaps xmm1,xmm10
+7FF6DA6267F4 - 48 8B C8              - mov rcx,rax
+7FF6DA6267F7 - E8 742F3000           - call 7FF6DA929770
+7FF6DA6267FC - F3 0F11 05 F8F11C03   - movss [7FF6DD7F59FC],xmm0
+7FF6DA626804 - 48 8D 0D F5F11C03     - lea rcx,[7FF6DD7F5A00]
+7FF6DA62680B - E8 98E49D01           - call 7FF6DC004CA8
+7FF6DA626810 - E8 5B292D00           - call 7FF6DA8F9170
+7FF6DA626815 - F3 44 0F10 05 660E7502  - movss xmm8,[7FF6DCD77684]
+7FF6DA62681E - 83 F8 05              - cmp eax,05
+7FF6DA626821 - 75 1F                 - jne 7FF6DA626842
+7FF6DA626823 - E8 B84B74FF           - call 7FF6D9D6B3E0
+7FF6DA626828 - 41 0F28 D0            - movaps xmm2,xmm8
+7FF6DA62682C - 41 0F28 C9            - movaps xmm1,xmm9
+7FF6DA626830 - 48 8B C8              - mov rcx,rax
+7FF6DA626833 - E8 382F3000           - call 7FF6DA929770
+7FF6DA626838 - F3 0F11 05 BCF11C03   - movss [7FF6DD7F59FC],xmm0
+7FF6DA626840 - EB 08                 - jmp 7FF6DA62684A
+7FF6DA626842 - F3 0F10 05 B2F11C03   - movss xmm0,[7FF6DD7F59FC]
+7FF6DA62684A - F3 41 0F5C 47 08      - subss xmm0,[r15+08]
+7FF6DA626850 - F3 0F11 05 A4F11C03   - movss [7FF6DD7F59FC],xmm0
+7FF6DA626858 - 0F2F F8               - comiss xmm7,xmm0
+7FF6DA62685B - 73 05                 - jae 7FF6DA626862
+7FF6DA62685D - 0F2F C6               - comiss xmm0,xmm6
+7FF6DA626860 - 76 0F                 - jna 7FF6DA626871
+7FF6DA626862 - 48 8D 15 93F11C03     - lea rdx,[7FF6DD7F59FC]
+7FF6DA626869 - 48 8B CB              - mov rcx,rbx
+7FF6DA62686C - E8 2F9A0000           - call 7FF6DA6302A0
+7FF6DA626871 - 48 8B 0D 10221E03     - mov rcx,[7FF6DD808A88]
+7FF6DA626878 - 48 85 C9              - test rcx,rcx
+7FF6DA62687B - 75 2E                 - jne 7FF6DA6268AB
+7FF6DA62687D - 48 8D 0D E5A01B03     - lea rcx,[7FF6DD7E0969]
+7FF6DA626884 - E8 D7663A01           - call 7FF6DB9CCF60
+7FF6DA626889 - 4C 8B C8              - mov r9,rax
+7FF6DA62688C - 4C 8D 05 9D527402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626893 - BA B4000000           - mov edx,000000B4
+7FF6DA626898 - 48 8D 0D 8111E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA62689F - E8 7CEA3901           - call 7FF6DB9C5320
+7FF6DA6268A4 - 48 8B 0D DD211E03     - mov rcx,[7FF6DD808A88]
+7FF6DA6268AB - 44 0FB6 83 AA040000   - movzx r8d,byte ptr [rbx+000004AA]
+7FF6DA6268B3 - 49 8B D7              - mov rdx,r15
+7FF6DA6268B6 - E8 05252A00           - call 7FF6DA8C8DC0
+7FF6DA6268BB - 48 8B 0D 166B1C03     - mov rcx,[7FF6DD7ED3D8]
+7FF6DA6268C2 - 48 85 C9              - test rcx,rcx
+7FF6DA6268C5 - 74 05                 - je 7FF6DA6268CC
+7FF6DA6268C7 - E8 C41DACFF           - call 7FF6DA0E8690
+7FF6DA6268CC - 66 C7 83 A8040000 0100 - mov word ptr [rbx+000004A8],0001
+7FF6DA6268D5 - 80 BB 2A010000 00     - cmp byte ptr [rbx+0000012A],00
+7FF6DA6268DC - 75 09                 - jne 7FF6DA6268E7
+7FF6DA6268DE - E8 7D6FBDFF           - call 7FF6DA1FD860
+7FF6DA6268E3 - 85 C0                 - test eax,eax
+7FF6DA6268E5 - 74 07                 - je 7FF6DA6268EE
+7FF6DA6268E7 - C6 83 A8040000 00     - mov byte ptr [rbx+000004A8],00
+7FF6DA6268EE - 80 BB 28010000 00     - cmp byte ptr [rbx+00000128],00
+7FF6DA6268F5 - 0F84 87000000         - je 7FF6DA626982
+7FF6DA6268FB - C6 83 A8040000 00     - mov byte ptr [rbx+000004A8],00
+7FF6DA626902 - 48 8D 35 97770102     - lea rsi,[7FF6DC63E0A0]
+7FF6DA626909 - 48 89 75 8F           - mov [rbp-71],rsi
+7FF6DA62690D - 89 7D 97              - mov [rbp-69],edi
+7FF6DA626910 - 48 8B 0D 79B6A903     - mov rcx,[7FF6DE0C1F90]
+7FF6DA626917 - 48 85 C9              - test rcx,rcx
+7FF6DA62691A - 75 2E                 - jne 7FF6DA62694A
+7FF6DA62691C - 48 8D 0D 5CB6A903     - lea rcx,[7FF6DE0C1F7F]
+7FF6DA626923 - E8 38663A01           - call 7FF6DB9CCF60
+7FF6DA626928 - 4C 8B C8              - mov r9,rax
+7FF6DA62692B - 4C 8D 05 FE517402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626932 - BA B4000000           - mov edx,000000B4
+7FF6DA626937 - 48 8D 0D E210E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA62693E - E8 DDE93901           - call 7FF6DB9C5320
+7FF6DA626943 - 48 8B 0D 46B6A903     - mov rcx,[7FF6DE0C1F90]
+7FF6DA62694A - 33 D2                 - xor edx,edx
+7FF6DA62694C - E8 BFA5FFFF           - call 7FF6DA620F10
+7FF6DA626951 - 48 89 45 9F           - mov [rbp-61],rax
+7FF6DA626955 - 4C 8D 35 54770102     - lea r14,[7FF6DC63E0B0]
+7FF6DA62695C - 4C 89 75 8F           - mov [rbp-71],r14
+7FF6DA626960 - 48 85 C0              - test rax,rax
+7FF6DA626963 - 74 15                 - je 7FF6DA62697A
+7FF6DA626965 - 33 D2                 - xor edx,edx
+7FF6DA626967 - 48 8B C8              - mov rcx,rax
+7FF6DA62696A - E8 4198B401           - call 7FF6DC1701B0
+7FF6DA62696F - 84 C0                 - test al,al
+7FF6DA626971 - 74 07                 - je 7FF6DA62697A
+7FF6DA626973 - C6 83 A8040000 01     - mov byte ptr [rbx+000004A8],01
+7FF6DA62697A - 4C 89 75 8F           - mov [rbp-71],r14
+7FF6DA62697E - 48 89 75 8F           - mov [rbp-71],rsi
+7FF6DA626982 - 48 8B 0D 9FD01C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626989 - 48 85 C9              - test rcx,rcx
+7FF6DA62698C - 75 2E                 - jne 7FF6DA6269BC
+7FF6DA62698E - 48 8D 0D 1AA11B03     - lea rcx,[7FF6DD7E0AAF]
+7FF6DA626995 - E8 C6653A01           - call 7FF6DB9CCF60
+7FF6DA62699A - 4C 8B C8              - mov r9,rax
+7FF6DA62699D - 4C 8D 05 8C517402     - lea r8,[7FF6DCD6BB30]
+7FF6DA6269A4 - BA B4000000           - mov edx,000000B4
+7FF6DA6269A9 - 48 8D 0D 7010E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA6269B0 - E8 6BE93901           - call 7FF6DB9C5320
+7FF6DA6269B5 - 48 8B 0D 6CD01C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA6269BC - E8 1F5AFAFF           - call 7FF6DA5CC3E0
+7FF6DA6269C1 - 84 C0                 - test al,al
+7FF6DA6269C3 - 0F84 2E010000         - je 7FF6DA626AF7
+7FF6DA6269C9 - 48 8B 0D 58D01C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA6269D0 - 48 85 C9              - test rcx,rcx
+7FF6DA6269D3 - 75 2E                 - jne 7FF6DA626A03
+7FF6DA6269D5 - 48 8D 0D D3A01B03     - lea rcx,[7FF6DD7E0AAF]
+7FF6DA6269DC - E8 7F653A01           - call 7FF6DB9CCF60
+7FF6DA6269E1 - 4C 8B C8              - mov r9,rax
+7FF6DA6269E4 - 4C 8D 05 45517402     - lea r8,[7FF6DCD6BB30]
+7FF6DA6269EB - BA B4000000           - mov edx,000000B4
+7FF6DA6269F0 - 48 8D 0D 2910E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA6269F7 - E8 24E93901           - call 7FF6DB9C5320
+7FF6DA6269FC - 48 8B 0D 25D01C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626A03 - E8 F859FAFF           - call 7FF6DA5CC400
+7FF6DA626A08 - 84 C0                 - test al,al
+7FF6DA626A0A - 0F94 C0               - sete al
+7FF6DA626A0D - 84 C0                 - test al,al
+7FF6DA626A0F - 74 07                 - je 7FF6DA626A18
+7FF6DA626A11 - C6 83 A8040000 00     - mov byte ptr [rbx+000004A8],00
+7FF6DA626A18 - 48 8B 0D 09D01C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626A1F - 48 85 C9              - test rcx,rcx
+7FF6DA626A22 - 75 2E                 - jne 7FF6DA626A52
+7FF6DA626A24 - 48 8D 0D 84A01B03     - lea rcx,[7FF6DD7E0AAF]
+7FF6DA626A2B - E8 30653A01           - call 7FF6DB9CCF60
+7FF6DA626A30 - 4C 8B C8              - mov r9,rax
+7FF6DA626A33 - 4C 8D 05 F6507402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626A3A - BA B4000000           - mov edx,000000B4
+7FF6DA626A3F - 48 8D 0D DA0FE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626A46 - E8 D5E83901           - call 7FF6DB9C5320
+7FF6DA626A4B - 48 8B 0D D6CF1C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626A52 - E8 1959FAFF           - call 7FF6DA5CC370
+7FF6DA626A57 - 84 C0                 - test al,al
+7FF6DA626A59 - 0F84 87000000         - je 7FF6DA626AE6
+7FF6DA626A5F - 4C 8B 35 C2CF1C03     - mov r14,[7FF6DD7F3A28]
+7FF6DA626A66 - 4D 85 F6              - test r14,r14
+7FF6DA626A69 - 75 2E                 - jne 7FF6DA626A99
+7FF6DA626A6B - 48 8D 0D 3DA01B03     - lea rcx,[7FF6DD7E0AAF]
+7FF6DA626A72 - E8 E9643A01           - call 7FF6DB9CCF60
+7FF6DA626A77 - 4C 8B C8              - mov r9,rax
+7FF6DA626A7A - 4C 8D 05 AF507402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626A81 - BA B4000000           - mov edx,000000B4
+7FF6DA626A86 - 48 8D 0D 930FE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626A8D - E8 8EE83901           - call 7FF6DB9C5320
+7FF6DA626A92 - 4C 8B 35 8FCF1C03     - mov r14,[7FF6DD7F3A28]
+7FF6DA626A99 - 48 8B 35 C81C1E03     - mov rsi,[7FF6DD808768]
+7FF6DA626AA0 - 48 85 F6              - test rsi,rsi
+7FF6DA626AA3 - 75 2E                 - jne 7FF6DA626AD3
+7FF6DA626AA5 - 48 8D 0D 50031C03     - lea rcx,[7FF6DD7E6DFC]
+7FF6DA626AAC - E8 AF643A01           - call 7FF6DB9CCF60
+7FF6DA626AB1 - 4C 8B C8              - mov r9,rax
+7FF6DA626AB4 - 4C 8D 05 75507402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626ABB - BA B4000000           - mov edx,000000B4
+7FF6DA626AC0 - 48 8D 0D 590FE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626AC7 - E8 54E83901           - call 7FF6DB9C5320
+7FF6DA626ACC - 48 8B 35 951C1E03     - mov rsi,[7FF6DD808768]
+7FF6DA626AD3 - 49 8B CE              - mov rcx,r14
+7FF6DA626AD6 - E8 7558FAFF           - call 7FF6DA5CC350
+7FF6DA626ADB - 0FB6 D0               - movzx edx,al
+7FF6DA626ADE - 48 8B CE              - mov rcx,rsi
+7FF6DA626AE1 - E8 EA8E2800           - call eldenring.Scaleform::Render::Matrix2x4<float>::TransformByInverse+C810
+7FF6DA626AE6 - C6 83 AA040000 00     - mov byte ptr [rbx+000004AA],00
+7FF6DA626AED - C7 83 00010000 03000000 - mov [rbx+00000100],00000003
+7FF6DA626AF7 - 43 8B 04 2C           - mov eax,[r12+r13]
+7FF6DA626AFB - 39 05 07EF1C03        - cmp [7FF6DD7F5A08],eax
+7FF6DA626B01 - 7E 3D                 - jle 7FF6DA626B40
+7FF6DA626B03 - 48 8D 0D FEEE1C03     - lea rcx,[7FF6DD7F5A08]
+7FF6DA626B0A - E8 F9E19D01           - call 7FF6DC004D08
+7FF6DA626B0F - 83 3D F2EE1C03 FF     - cmp dword ptr [7FF6DD7F5A08],-01
+7FF6DA626B16 - 75 28                 - jne 7FF6DA626B40
+7FF6DA626B18 - E8 C34874FF           - call 7FF6D9D6B3E0
+7FF6DA626B1D - 0F28 D6               - movaps xmm2,xmm6
+7FF6DA626B20 - 41 0F28 CA            - movaps xmm1,xmm10
+7FF6DA626B24 - 48 8B C8              - mov rcx,rax
+7FF6DA626B27 - E8 442C3000           - call 7FF6DA929770
+7FF6DA626B2C - F3 0F11 05 D0EE1C03   - movss [7FF6DD7F5A04],xmm0
+7FF6DA626B34 - 48 8D 0D CDEE1C03     - lea rcx,[7FF6DD7F5A08]
+7FF6DA626B3B - E8 68E19D01           - call 7FF6DC004CA8
+7FF6DA626B40 - E8 2B262D00           - call 7FF6DA8F9170
+7FF6DA626B45 - 83 F8 26              - cmp eax,26
+7FF6DA626B48 - 75 1F                 - jne 7FF6DA626B69
+7FF6DA626B4A - E8 914874FF           - call 7FF6D9D6B3E0
+7FF6DA626B4F - 41 0F28 D0            - movaps xmm2,xmm8
+7FF6DA626B53 - 41 0F28 C9            - movaps xmm1,xmm9
+7FF6DA626B57 - 48 8B C8              - mov rcx,rax
+7FF6DA626B5A - E8 112C3000           - call 7FF6DA929770
+7FF6DA626B5F - F3 0F11 05 9DEE1C03   - movss [7FF6DD7F5A04],xmm0
+7FF6DA626B67 - EB 08                 - jmp 7FF6DA626B71
+7FF6DA626B69 - F3 0F10 05 93EE1C03   - movss xmm0,[7FF6DD7F5A04]
+7FF6DA626B71 - F3 41 0F5C 47 08      - subss xmm0,[r15+08]
+7FF6DA626B77 - F3 0F11 05 85EE1C03   - movss [7FF6DD7F5A04],xmm0
+7FF6DA626B7F - 0F2F F8               - comiss xmm7,xmm0
+7FF6DA626B82 - 73 05                 - jae 7FF6DA626B89
+7FF6DA626B84 - 0F2F C6               - comiss xmm0,xmm6
+7FF6DA626B87 - 76 0F                 - jna 7FF6DA626B98
+7FF6DA626B89 - 48 8D 15 74EE1C03     - lea rdx,[7FF6DD7F5A04]
+7FF6DA626B90 - 48 8B CB              - mov rcx,rbx
+7FF6DA626B93 - E8 C8970000           - call 7FF6DA630360
+7FF6DA626B98 - 48 8B 0D D94E1C03     - mov rcx,[WorldChrMan]
+7FF6DA626B9F - 48 85 C9              - test rcx,rcx
+7FF6DA626BA2 - 75 2E                 - jne 7FF6DA626BD2
+7FF6DA626BA4 - 48 8D 0D C19D1B03     - lea rcx,[7FF6DD7E096C]
+7FF6DA626BAB - E8 B0633A01           - call 7FF6DB9CCF60
+7FF6DA626BB0 - 4C 8B C8              - mov r9,rax
+7FF6DA626BB3 - 4C 8D 05 764F7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626BBA - BA B4000000           - mov edx,000000B4
+7FF6DA626BBF - 48 8D 0D 5A0EE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626BC6 - E8 55E73901           - call 7FF6DB9C5320
+7FF6DA626BCB - 48 8B 0D A64E1C03     - mov rcx,[WorldChrMan]
+7FF6DA626BD2 - E8 C96AA7FF           - call 7FF6DA09D6A0
+7FF6DA626BD7 - 84 C0                 - test al,al
+7FF6DA626BD9 - 74 09                 - je 7FF6DA626BE4
+7FF6DA626BDB - 66 C7 83 A8040000 0001 - mov word ptr [rbx+000004A8],0100
+7FF6DA626BE4 - 80 BB 38030000 00     - cmp byte ptr [rbx+00000338],00
+7FF6DA626BEB - 74 07                 - je 7FF6DA626BF4
+7FF6DA626BED - C6 83 A8040000 00     - mov byte ptr [rbx+000004A8],00
+7FF6DA626BF4 - 80 BB 39030000 00     - cmp byte ptr [rbx+00000339],00
+7FF6DA626BFB - 74 0E                 - je 7FF6DA626C0B
+7FF6DA626BFD - C6 83 39030000 00     - mov byte ptr [rbx+00000339],00
+7FF6DA626C04 - C6 83 A8040000 01     - mov byte ptr [rbx+000004A8],01
+7FF6DA626C0B - 80 3D 05EC1C03 00     - cmp byte ptr [7FF6DD7F5817],00
+7FF6DA626C12 - 74 15                 - je 7FF6DA626C29
+7FF6DA626C14 - C6 05 FCEB1C03 00     - mov byte ptr [7FF6DD7F5817],00
+7FF6DA626C1B - C6 83 A8040000 00     - mov byte ptr [rbx+000004A8],00
+7FF6DA626C22 - C6 83 AA040000 00     - mov byte ptr [rbx+000004AA],00
+7FF6DA626C29 - 43 8B 04 2C           - mov eax,[r12+r13]
+7FF6DA626C2D - 39 05 DDED1C03        - cmp [7FF6DD7F5A10],eax
+7FF6DA626C33 - 7E 3D                 - jle 7FF6DA626C72
+7FF6DA626C35 - 48 8D 0D D4ED1C03     - lea rcx,[7FF6DD7F5A10]
+7FF6DA626C3C - E8 C7E09D01           - call 7FF6DC004D08
+7FF6DA626C41 - 83 3D C8ED1C03 FF     - cmp dword ptr [7FF6DD7F5A10],-01
+7FF6DA626C48 - 75 28                 - jne 7FF6DA626C72
+7FF6DA626C4A - E8 914774FF           - call 7FF6D9D6B3E0
+7FF6DA626C4F - 0F28 D6               - movaps xmm2,xmm6
+7FF6DA626C52 - 41 0F28 CA            - movaps xmm1,xmm10
+7FF6DA626C56 - 48 8B C8              - mov rcx,rax
+7FF6DA626C59 - E8 122B3000           - call 7FF6DA929770
+7FF6DA626C5E - F3 0F11 05 A6ED1C03   - movss [7FF6DD7F5A0C],xmm0
+7FF6DA626C66 - 48 8D 0D A3ED1C03     - lea rcx,[7FF6DD7F5A10]
+7FF6DA626C6D - E8 36E09D01           - call 7FF6DC004CA8
+7FF6DA626C72 - E8 F9242D00           - call 7FF6DA8F9170
+7FF6DA626C77 - 83 F8 32              - cmp eax,32
+7FF6DA626C7A - 75 1F                 - jne 7FF6DA626C9B
+7FF6DA626C7C - E8 5F4774FF           - call 7FF6D9D6B3E0
+7FF6DA626C81 - 41 0F28 D0            - movaps xmm2,xmm8
+7FF6DA626C85 - 41 0F28 C9            - movaps xmm1,xmm9
+7FF6DA626C89 - 48 8B C8              - mov rcx,rax
+7FF6DA626C8C - E8 DF2A3000           - call 7FF6DA929770
+7FF6DA626C91 - F3 0F11 05 73ED1C03   - movss [7FF6DD7F5A0C],xmm0
+7FF6DA626C99 - EB 08                 - jmp 7FF6DA626CA3
+7FF6DA626C9B - F3 0F10 05 69ED1C03   - movss xmm0,[7FF6DD7F5A0C]
+7FF6DA626CA3 - F3 41 0F5C 47 08      - subss xmm0,[r15+08]
+7FF6DA626CA9 - F3 0F11 05 5BED1C03   - movss [7FF6DD7F5A0C],xmm0
+7FF6DA626CB1 - 0F2F F8               - comiss xmm7,xmm0
+7FF6DA626CB4 - 73 05                 - jae 7FF6DA626CBB
+7FF6DA626CB6 - 0F2F C6               - comiss xmm0,xmm6
+7FF6DA626CB9 - 76 0F                 - jna 7FF6DA626CCA
+7FF6DA626CBB - 48 8D 15 4AED1C03     - lea rdx,[7FF6DD7F5A0C]
+7FF6DA626CC2 - 48 8B CB              - mov rcx,rbx
+7FF6DA626CC5 - E8 36960000           - call 7FF6DA630300
+7FF6DA626CCA - 80 BB A8040000 00     - cmp byte ptr [rbx+000004A8],00
+7FF6DA626CD1 - 0F85 B1020000         - jne 7FF6DA626F88
+7FF6DA626CD7 - 41 BD 01000000        - mov r13d,00000001
+7FF6DA626CDD - 41 8B FD              - mov edi,r13d
+7FF6DA626CE0 - 44 89 6D 87           - mov [rbp-79],r13d
+7FF6DA626CE4 - 48 8B 0D 3DCD1C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626CEB - 48 85 C9              - test rcx,rcx
+7FF6DA626CEE - 75 2E                 - jne 7FF6DA626D1E
+7FF6DA626CF0 - 48 8D 0D B89D1B03     - lea rcx,[7FF6DD7E0AAF]
+7FF6DA626CF7 - E8 64623A01           - call 7FF6DB9CCF60
+7FF6DA626CFC - 4C 8B C8              - mov r9,rax
+7FF6DA626CFF - 4C 8D 05 2A4E7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626D06 - BA B4000000           - mov edx,000000B4
+7FF6DA626D0B - 48 8D 0D 0E0DE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626D12 - E8 09E63901           - call 7FF6DB9C5320
+7FF6DA626D17 - 48 8B 0D 0ACD1C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626D1E - E8 BD56FAFF           - call 7FF6DA5CC3E0
+7FF6DA626D23 - 84 C0                 - test al,al
+7FF6DA626D25 - 74 4F                 - je 7FF6DA626D76
+7FF6DA626D27 - 83 CF 02              - or edi,02
+7FF6DA626D2A - 89 7D 87              - mov [rbp-79],edi
+7FF6DA626D2D - 48 8B 0D F4CC1C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626D34 - 48 85 C9              - test rcx,rcx
+7FF6DA626D37 - 75 2E                 - jne 7FF6DA626D67
+7FF6DA626D39 - 48 8D 0D 6F9D1B03     - lea rcx,[7FF6DD7E0AAF]
+7FF6DA626D40 - E8 1B623A01           - call 7FF6DB9CCF60
+7FF6DA626D45 - 4C 8B C8              - mov r9,rax
+7FF6DA626D48 - 4C 8D 05 E14D7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626D4F - BA B4000000           - mov edx,000000B4
+7FF6DA626D54 - 48 8D 0D C50CE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626D5B - E8 C0E53901           - call 7FF6DB9C5320
+7FF6DA626D60 - 48 8B 0D C1CC1C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626D67 - E8 3456FAFF           - call 7FF6DA5CC3A0
+7FF6DA626D6C - 84 C0                 - test al,al
+7FF6DA626D6E - 75 06                 - jne 7FF6DA626D76
+7FF6DA626D70 - 45 0FB6 F5            - movzx r14d,r13l
+7FF6DA626D74 - EB 03                 - jmp 7FF6DA626D79
+7FF6DA626D76 - 45 32 F6              - xor r14l,r14l
+7FF6DA626D79 - 40 F6 C7 02           - test dil,02
+7FF6DA626D7D - 74 06                 - je 7FF6DA626D85
+7FF6DA626D7F - 83 E7 FD              - and edi,-03
+7FF6DA626D82 - 89 7D 87              - mov [rbp-79],edi
+7FF6DA626D85 - 83 E7 FE              - and edi,-02
+7FF6DA626D88 - 89 7D 87              - mov [rbp-79],edi
+7FF6DA626D8B - 0FB6 B3 A9040000      - movzx esi,byte ptr [rbx+000004A9]
+7FF6DA626D92 - 40 84 F6              - test sil,sil
+7FF6DA626D95 - 0F85 0C010000         - jne 7FF6DA626EA7
+7FF6DA626D9B - 83 CF 04              - or edi,04
+7FF6DA626D9E - 89 7D 87              - mov [rbp-79],edi
+7FF6DA626DA1 - 48 8B 0D 80CC1C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626DA8 - 48 85 C9              - test rcx,rcx
+7FF6DA626DAB - 75 2E                 - jne 7FF6DA626DDB
+7FF6DA626DAD - 48 8D 0D FB9C1B03     - lea rcx,[7FF6DD7E0AAF]
+7FF6DA626DB4 - E8 A7613A01           - call 7FF6DB9CCF60
+7FF6DA626DB9 - 4C 8B C8              - mov r9,rax
+7FF6DA626DBC - 4C 8D 05 6D4D7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626DC3 - BA B4000000           - mov edx,000000B4
+7FF6DA626DC8 - 48 8D 0D 510CE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626DCF - E8 4CE53901           - call 7FF6DB9C5320
+7FF6DA626DD4 - 48 8B 0D 4DCC1C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626DDB - E8 0056FAFF           - call 7FF6DA5CC3E0
+7FF6DA626DE0 - 84 C0                 - test al,al
+7FF6DA626DE2 - 0F84 95000000         - je 7FF6DA626E7D
+7FF6DA626DE8 - 83 CF 08              - or edi,08
+7FF6DA626DEB - 89 7D 87              - mov [rbp-79],edi
+7FF6DA626DEE - 48 8B 0D 33CC1C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626DF5 - 48 85 C9              - test rcx,rcx
+7FF6DA626DF8 - 75 2E                 - jne 7FF6DA626E28
+7FF6DA626DFA - 48 8D 0D AE9C1B03     - lea rcx,[7FF6DD7E0AAF]
+7FF6DA626E01 - E8 5A613A01           - call 7FF6DB9CCF60
+7FF6DA626E06 - 4C 8B C8              - mov r9,rax
+7FF6DA626E09 - 4C 8D 05 204D7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626E10 - BA B4000000           - mov edx,000000B4
+7FF6DA626E15 - 48 8D 0D 040CE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626E1C - E8 FFE43901           - call 7FF6DB9C5320
+7FF6DA626E21 - 48 8B 0D 00CC1C03     - mov rcx,[7FF6DD7F3A28]
+7FF6DA626E28 - E8 7355FAFF           - call 7FF6DA5CC3A0
+7FF6DA626E2D - 84 C0                 - test al,al
+7FF6DA626E2F - 74 4C                 - je 7FF6DA626E7D
+7FF6DA626E31 - 83 CF 10              - or edi,10
+7FF6DA626E34 - 89 7D 87              - mov [rbp-79],edi
+7FF6DA626E37 - 48 8B 05 EACB1C03     - mov rax,[7FF6DD7F3A28]
+7FF6DA626E3E - 48 85 C0              - test rax,rax
+7FF6DA626E41 - 75 2E                 - jne 7FF6DA626E71
+7FF6DA626E43 - 48 8D 0D 659C1B03     - lea rcx,[7FF6DD7E0AAF]
+7FF6DA626E4A - E8 11613A01           - call 7FF6DB9CCF60
+7FF6DA626E4F - 4C 8B C8              - mov r9,rax
+7FF6DA626E52 - 4C 8D 05 D74C7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626E59 - BA B4000000           - mov edx,000000B4
+7FF6DA626E5E - 48 8D 0D BB0BE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626E65 - E8 B6E43901           - call 7FF6DB9C5320
+7FF6DA626E6A - 48 8B 05 B7CB1C03     - mov rax,[7FF6DD7F3A28]
+7FF6DA626E71 - 80 78 2C 00           - cmp byte ptr [rax+2C],00
+7FF6DA626E75 - 74 06                 - je 7FF6DA626E7D
+7FF6DA626E77 - 41 0FB6 C5            - movzx eax,r13l
+7FF6DA626E7B - EB 02                 - jmp 7FF6DA626E7F
+7FF6DA626E7D - 32 C0                 - xor al,al
+7FF6DA626E7F - 40 F6 C7 10           - test dil,10
+7FF6DA626E83 - 74 06                 - je 7FF6DA626E8B
+7FF6DA626E85 - 83 E7 EF              - and edi,-11
+7FF6DA626E88 - 89 7D 87              - mov [rbp-79],edi
+7FF6DA626E8B - 40 F6 C7 08           - test dil,08
+7FF6DA626E8F - 74 06                 - je 7FF6DA626E97
+7FF6DA626E91 - 83 E7 F7              - and edi,-09
+7FF6DA626E94 - 89 7D 87              - mov [rbp-79],edi
+7FF6DA626E97 - 83 E7 FB              - and edi,-05
+7FF6DA626E9A - 89 7D 87              - mov [rbp-79],edi
+7FF6DA626E9D - 40 0FB6 F6            - movzx esi,sil
+7FF6DA626EA1 - 84 C0                 - test al,al
+7FF6DA626EA3 - 41 0F45 F5            - cmovne esi,r13d
+7FF6DA626EA7 - 45 84 F6              - test r14l,r14l
+7FF6DA626EAA - 0F85 C8000000         - jne 7FF6DA626F78
+7FF6DA626EB0 - 48 8B 0D 79411D03     - mov rcx,[7FF6DD7FB030]
+7FF6DA626EB7 - 48 85 C9              - test rcx,rcx
+7FF6DA626EBA - 75 2E                 - jne 7FF6DA626EEA
+7FF6DA626EBC - 48 8D 0D 3E9A1B03     - lea rcx,[7FF6DD7E0901]
+7FF6DA626EC3 - E8 98603A01           - call 7FF6DB9CCF60
+7FF6DA626EC8 - 4C 8B C8              - mov r9,rax
+7FF6DA626ECB - 4C 8D 05 5E4C7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626ED2 - BA B4000000           - mov edx,000000B4
+7FF6DA626ED7 - 48 8D 0D 420BE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626EDE - E8 3DE43901           - call 7FF6DB9C5320
+7FF6DA626EE3 - 48 8B 0D 46411D03     - mov rcx,[7FF6DD7FB030]
+7FF6DA626EEA - E8 213E1500           - call 7FF6DA77AD10
+7FF6DA626EEF - 48 8B 05 02401D03     - mov rax,[7FF6DD7FAEF8]
+7FF6DA626EF6 - 48 85 C0              - test rax,rax
+7FF6DA626EF9 - 75 2E                 - jne 7FF6DA626F29
+7FF6DA626EFB - 48 8D 0D 8FE81B03     - lea rcx,[7FF6DD7E5791]
+7FF6DA626F02 - E8 59603A01           - call 7FF6DB9CCF60
+7FF6DA626F07 - 4C 8B C8              - mov r9,rax
+7FF6DA626F0A - 4C 8D 05 1F4C7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626F11 - BA B4000000           - mov edx,000000B4
+7FF6DA626F16 - 48 8D 0D 030BE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626F1D - E8 FEE33901           - call 7FF6DB9C5320
+7FF6DA626F22 - 48 8B 05 CF3F1D03     - mov rax,[7FF6DD7FAEF8]
+7FF6DA626F29 - 44 88 68 40           - mov [rax+40],r13l
+7FF6DA626F2D - 40 84 F6              - test sil,sil
+7FF6DA626F30 - 75 41                 - jne 7FF6DA626F73
+7FF6DA626F32 - 48 8B 05 2F181E03     - mov rax,[7FF6DD808768]
+7FF6DA626F39 - 48 85 C0              - test rax,rax
+7FF6DA626F3C - 75 2E                 - jne 7FF6DA626F6C
+7FF6DA626F3E - 48 8D 0D B7FE1B03     - lea rcx,[7FF6DD7E6DFC]
+7FF6DA626F45 - E8 16603A01           - call 7FF6DB9CCF60
+7FF6DA626F4A - 4C 8B C8              - mov r9,rax
+7FF6DA626F4D - 4C 8D 05 DC4B7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626F54 - BA B4000000           - mov edx,000000B4
+7FF6DA626F59 - 48 8D 0D C00AE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626F60 - E8 BBE33901           - call 7FF6DB9C5320
+7FF6DA626F65 - 48 8B 05 FC171E03     - mov rax,[7FF6DD808768]
+7FF6DA626F6C - 44 88 A8 89000000     - mov [rax+00000089],r13l
+7FF6DA626F73 - E8 A8590B00           - call 7FF6DA6DC920
+7FF6DA626F78 - C7 83 48020000 02000000 - mov [rbx+00000248],00000002
+7FF6DA626F82 - 41 BD 20000000        - mov r13d,00000020
+7FF6DA626F88 - 48 8B 0D 693F1D03     - mov rcx,[7FF6DD7FAEF8]
+7FF6DA626F8F - 48 85 C9              - test rcx,rcx
+7FF6DA626F92 - 75 2E                 - jne 7FF6DA626FC2
+7FF6DA626F94 - 48 8D 0D F6E71B03     - lea rcx,[7FF6DD7E5791]
+7FF6DA626F9B - E8 C05F3A01           - call 7FF6DB9CCF60
+7FF6DA626FA0 - 4C 8B C8              - mov r9,rax
+7FF6DA626FA3 - 4C 8D 05 864B7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA626FAA - BA B4000000           - mov edx,000000B4
+7FF6DA626FAF - 48 8D 0D 6A0AE901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA626FB6 - E8 65E33901           - call 7FF6DB9C5320
+7FF6DA626FBB - 48 8B 0D 363F1D03     - mov rcx,[7FF6DD7FAEF8]
+7FF6DA626FC2 - 49 8B D7              - mov rdx,r15
+7FF6DA626FC5 - E8 66EA1400           - call 7FF6DA775A30
+7FF6DA626FCA - F3 41 0F10 57 08      - movss xmm2,[r15+08]
+7FF6DA626FD0 - 0FB6 93 A8040000      - movzx edx,byte ptr [rbx+000004A8]
+7FF6DA626FD7 - 48 8B CB              - mov rcx,rbx
+7FF6DA626FDA - E8 C1760000           - call 7FF6DA62E6A0
+7FF6DA626FDF - F3 41 0F10 57 08      - movss xmm2,[r15+08]
+7FF6DA626FE5 - 0FB6 93 A8040000      - movzx edx,byte ptr [rbx+000004A8]
+7FF6DA626FEC - 48 8B CB              - mov rcx,rbx
+7FF6DA626FEF - E8 CC860000           - call 7FF6DA62F6C0
+7FF6DA626FF4 - 48 8B 0D 856A1C03     - mov rcx,[7FF6DD7EDA80]
+7FF6DA626FFB - 48 85 C9              - test rcx,rcx
+7FF6DA626FFE - 74 13                 - je 7FF6DA627013
+7FF6DA627000 - 83 CF 20              - or edi,20
+7FF6DA627003 - 89 7D 87              - mov [rbp-79],edi
+7FF6DA627006 - E8 55ACB1FF           - call 7FF6DA141C60
+7FF6DA62700B - 84 C0                 - test al,al
+7FF6DA62700D - 74 04                 - je 7FF6DA627013
+7FF6DA62700F - B0 01                 - mov al,01
+7FF6DA627011 - EB 02                 - jmp 7FF6DA627015
+7FF6DA627013 - 32 C0                 - xor al,al
+7FF6DA627015 - 40 F6 C7 20           - test dil,20
+7FF6DA627019 - 74 06                 - je 7FF6DA627021
+7FF6DA62701B - 83 E7 DF              - and edi,-21
+7FF6DA62701E - 89 7D 87              - mov [rbp-79],edi
+7FF6DA627021 - 48 8B 0D 38661C03     - mov rcx,[7FF6DD7ED660]
+7FF6DA627028 - 48 85 C9              - test rcx,rcx
+7FF6DA62702B - 74 12                 - je 7FF6DA62703F
+7FF6DA62702D - 80 BB A8040000 00     - cmp byte ptr [rbx+000004A8],00
+7FF6DA627034 - 74 09                 - je 7FF6DA62703F
+7FF6DA627036 - 84 C0                 - test al,al
+7FF6DA627038 - 75 05                 - jne 7FF6DA62703F
+7FF6DA62703A - E8 E12FAFFF           - call 7FF6DA11A020
+7FF6DA62703F - 48 8B 0D 32711C03     - mov rcx,[7FF6DD7EE178]
+7FF6DA627046 - 48 85 C9              - test rcx,rcx
+7FF6DA627049 - 74 59                 - je 7FF6DA6270A4
+7FF6DA62704B - 48 8B 89 E0000000     - mov rcx,[rcx+000000E0]
+7FF6DA627052 - 48 8B 01              - mov rax,[rcx]
+7FF6DA627055 - 49 8B D7              - mov rdx,r15
+7FF6DA627058 - FF 90 C0000000        - call qword ptr [rax+000000C0]
+7FF6DA62705E - 48 8B 0D 13711C03     - mov rcx,[7FF6DD7EE178]
+7FF6DA627065 - 48 85 C9              - test rcx,rcx
+7FF6DA627068 - 75 2E                 - jne 7FF6DA627098
+7FF6DA62706A - 48 8D 0D 31991B03     - lea rcx,[7FF6DD7E09A2]
+7FF6DA627071 - E8 EA5E3A01           - call 7FF6DB9CCF60
+7FF6DA627076 - 4C 8B C8              - mov r9,rax
+7FF6DA627079 - 4C 8D 05 B04A7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA627080 - BA B4000000           - mov edx,000000B4
+7FF6DA627085 - 48 8D 0D 9409E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA62708C - E8 8FE23901           - call 7FF6DB9C5320
+7FF6DA627091 - 48 8B 0D E0701C03     - mov rcx,[7FF6DD7EE178]
+7FF6DA627098 - 48 8B 89 C0000000     - mov rcx,[rcx+000000C0]
+7FF6DA62709F - E8 3CEDB6FF           - call 7FF6DA195DE0
+7FF6DA6270A4 - F3 41 0F10 4F 08      - movss xmm1,[r15+08]
+7FF6DA6270AA - 48 8B CB              - mov rcx,rbx
+7FF6DA6270AD - E8 AE7E0000           - call 7FF6DA62EF60
+7FF6DA6270B2 - 80 BB A8040000 00     - cmp byte ptr [rbx+000004A8],00
+7FF6DA6270B9 - 74 3F                 - je 7FF6DA6270FA
+7FF6DA6270BB - 48 8B 0D 864D1C03     - mov rcx,[DamageCtrl]
+7FF6DA6270C2 - 48 85 C9              - test rcx,rcx
+7FF6DA6270C5 - 75 2E                 - jne 7FF6DA6270F5
+7FF6DA6270C7 - 48 8D 0D 93111C03     - lea rcx,[7FF6DD7E8261]
+7FF6DA6270CE - E8 8D5E3A01           - call 7FF6DB9CCF60
+7FF6DA6270D3 - 4C 8B C8              - mov r9,rax
+7FF6DA6270D6 - 4C 8D 05 534A7402     - lea r8,[7FF6DCD6BB30]
+7FF6DA6270DD - BA B4000000           - mov edx,000000B4
+7FF6DA6270E2 - 48 8D 0D 3709E901     - lea rcx,[7FF6DC4B7A20]
+7FF6DA6270E9 - E8 32E23901           - call 7FF6DB9C5320
+7FF6DA6270EE - 48 8B 0D 534D1C03     - mov rcx,[DamageCtrl]
+7FF6DA6270F5 - E8 0644A9FF           - call 7FF6DA0BB500
+7FF6DA6270FA - 43 8B 04 2C           - mov eax,[r12+r13]
+7FF6DA6270FE - 39 05 14E91C03        - cmp [7FF6DD7F5A18],eax
+7FF6DA627104 - 7E 3D                 - jle 7FF6DA627143
+7FF6DA627106 - 48 8D 0D 0BE91C03     - lea rcx,[7FF6DD7F5A18]
+7FF6DA62710D - E8 F6DB9D01           - call 7FF6DC004D08
+7FF6DA627112 - 83 3D FFE81C03 FF     - cmp dword ptr [7FF6DD7F5A18],-01
+7FF6DA627119 - 75 28                 - jne 7FF6DA627143
+7FF6DA62711B - E8 C04274FF           - call 7FF6D9D6B3E0
+7FF6DA627120 - 0F28 D6               - movaps xmm2,xmm6
+7FF6DA627123 - 41 0F28 CA            - movaps xmm1,xmm10
+7FF6DA627127 - 48 8B C8              - mov rcx,rax
+7FF6DA62712A - E8 41263000           - call 7FF6DA929770
+7FF6DA62712F - F3 0F11 05 DDE81C03   - movss [7FF6DD7F5A14],xmm0
+7FF6DA627137 - 48 8D 0D DAE81C03     - lea rcx,[7FF6DD7F5A18]
+7FF6DA62713E - E8 65DB9D01           - call 7FF6DC004CA8
+7FF6DA627143 - E8 28202D00           - call 7FF6DA8F9170
+7FF6DA627148 - 83 F8 21              - cmp eax,21
+7FF6DA62714B - 75 1F                 - jne 7FF6DA62716C
+7FF6DA62714D - E8 8E4274FF           - call 7FF6D9D6B3E0
+7FF6DA627152 - 41 0F28 D0            - movaps xmm2,xmm8
+7FF6DA627156 - 41 0F28 C9            - movaps xmm1,xmm9
+7FF6DA62715A - 48 8B C8              - mov rcx,rax
+7FF6DA62715D - E8 0E263000           - call 7FF6DA929770
+7FF6DA627162 - F3 0F11 05 AAE81C03   - movss [7FF6DD7F5A14],xmm0
+7FF6DA62716A - EB 08                 - jmp 7FF6DA627174
+7FF6DA62716C - F3 0F10 05 A0E81C03   - movss xmm0,[7FF6DD7F5A14]
+7FF6DA627174 - F3 41 0F5C 47 08      - subss xmm0,[r15+08]
+7FF6DA62717A - F3 0F11 05 92E81C03   - movss [7FF6DD7F5A14],xmm0
+7FF6DA627182 - 0F2F F8               - comiss xmm7,xmm0
+7FF6DA627185 - 73 05                 - jae 7FF6DA62718C
+7FF6DA627187 - 0F2F C6               - comiss xmm0,xmm6
+7FF6DA62718A - 76 0F                 - jna 7FF6DA62719B
+7FF6DA62718C - 48 8D 15 81E81C03     - lea rdx,[7FF6DD7F5A14]
+7FF6DA627193 - 48 8B CB              - mov rcx,rbx
+7FF6DA627196 - E8 25920000           - call 7FF6DA6303C0
+7FF6DA62719B - F3 41 0F10 4F 08      - movss xmm1,[r15+08]
+7FF6DA6271A1 - 48 8B CB              - mov rcx,rbx
+7FF6DA6271A4 - E8 878D0000           - call 7FF6DA62FF30
+7FF6DA6271A9 - 44 0FB6 83 AA040000   - movzx r8d,byte ptr [rbx+000004AA]
+7FF6DA6271B1 - 0FB6 93 A8040000      - movzx edx,byte ptr [rbx+000004A8]
+7FF6DA6271B8 - 48 8B CB              - mov rcx,rbx
+7FF6DA6271BB - E8 60660000           - call 7FF6DA62D820
+7FF6DA6271C0 - 43 8B 04 2C           - mov eax,[r12+r13]
+7FF6DA6271C4 - 39 05 56E81C03        - cmp [7FF6DD7F5A20],eax
+7FF6DA6271CA - 7E 3D                 - jle 7FF6DA627209
+7FF6DA6271CC - 48 8D 0D 4DE81C03     - lea rcx,[7FF6DD7F5A20]
+7FF6DA6271D3 - E8 30DB9D01           - call 7FF6DC004D08
+7FF6DA6271D8 - 83 3D 41E81C03 FF     - cmp dword ptr [7FF6DD7F5A20],-01
+7FF6DA6271DF - 75 28                 - jne 7FF6DA627209
+7FF6DA6271E1 - E8 FA4174FF           - call 7FF6D9D6B3E0
+7FF6DA6271E6 - 0F28 D6               - movaps xmm2,xmm6
+7FF6DA6271E9 - 41 0F28 CA            - movaps xmm1,xmm10
+7FF6DA6271ED - 48 8B C8              - mov rcx,rax
+7FF6DA6271F0 - E8 7B253000           - call 7FF6DA929770
+7FF6DA6271F5 - F3 0F11 05 1FE81C03   - movss [7FF6DD7F5A1C],xmm0
+7FF6DA6271FD - 48 8D 0D 1CE81C03     - lea rcx,[7FF6DD7F5A20]
+7FF6DA627204 - E8 9FDA9D01           - call 7FF6DC004CA8
+7FF6DA627209 - E8 621F2D00           - call 7FF6DA8F9170
+7FF6DA62720E - 83 F8 14              - cmp eax,14
+7FF6DA627211 - 75 1F                 - jne 7FF6DA627232
+7FF6DA627213 - E8 C84174FF           - call 7FF6D9D6B3E0
+7FF6DA627218 - 41 0F28 D0            - movaps xmm2,xmm8
+7FF6DA62721C - 41 0F28 C9            - movaps xmm1,xmm9
+7FF6DA627220 - 48 8B C8              - mov rcx,rax
+7FF6DA627223 - E8 48253000           - call 7FF6DA929770
+7FF6DA627228 - F3 0F11 05 ECE71C03   - movss [7FF6DD7F5A1C],xmm0
+7FF6DA627230 - EB 08                 - jmp 7FF6DA62723A
+7FF6DA627232 - F3 0F10 05 E2E71C03   - movss xmm0,[7FF6DD7F5A1C]
+7FF6DA62723A - F3 41 0F5C 47 08      - subss xmm0,[r15+08]
+7FF6DA627240 - F3 0F11 05 D4E71C03   - movss [7FF6DD7F5A1C],xmm0
+7FF6DA627248 - 0F2F F8               - comiss xmm7,xmm0
+7FF6DA62724B - 73 05                 - jae 7FF6DA627252
+7FF6DA62724D - 0F2F C6               - comiss xmm0,xmm6
+7FF6DA627250 - 76 0F                 - jna 7FF6DA627261
+7FF6DA627252 - 48 8D 15 C3E71C03     - lea rdx,[7FF6DD7F5A1C]
+7FF6DA627259 - 48 8B CB              - mov rcx,rbx
+7FF6DA62725C - E8 1F920000           - call 7FF6DA630480
+7FF6DA627261 - 0FB6 8B 28010000      - movzx ecx,byte ptr [rbx+00000128]
+7FF6DA627268 - E8 A3373500           - call 7FF6DA97AA10
+7FF6DA62726D - 48 8B 4D CF           - mov rcx,[rbp-31]
+7FF6DA627271 - 48 33 CC              - xor rcx,rsp
+7FF6DA627274 - E8 67D89D01           - call 7FF6DC004AE0
+7FF6DA627279 - 4C 8D 9C 24 D0000000  - lea r11,[rsp+000000D0]
+7FF6DA627281 - 49 8B 5B 50           - mov rbx,[r11+50]
+7FF6DA627285 - 41 0F28 73 F0         - movaps xmm6,[r11-10]
+7FF6DA62728A - 41 0F28 7B E0         - movaps xmm7,[r11-20]
+7FF6DA62728F - 45 0F28 43 D0         - movaps xmm8,[r11-30]
+7FF6DA627294 - 45 0F28 4B C0         - movaps xmm9,[r11-40]
+7FF6DA627299 - 45 0F28 53 B0         - movaps xmm10,[r11-50]
+7FF6DA62729E - 49 8B E3              - mov rsp,r11
+7FF6DA6272A1 - 41 5F                 - pop r15
+7FF6DA6272A3 - 41 5E                 - pop r14
+7FF6DA6272A5 - 41 5D                 - pop r13
+7FF6DA6272A7 - 41 5C                 - pop r12
+7FF6DA6272A9 - 5F                    - pop rdi
+7FF6DA6272AA - 5E                    - pop rsi
+7FF6DA6272AB - 5D                    - pop rbp
+7FF6DA6272AC - C3                    - ret 

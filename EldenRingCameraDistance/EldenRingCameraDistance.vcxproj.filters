@@ -55,5 +55,6 @@
   <ItemGroup>
     <Text Include="..\doc\ce_asm_snippet.txt" />
     <Text Include="..\doc\ce_asm_pivot_interpolation.txt" />
+    <Text Include="..\doc\ce_asm_gamethread.txt" />
   </ItemGroup>
 </Project>
