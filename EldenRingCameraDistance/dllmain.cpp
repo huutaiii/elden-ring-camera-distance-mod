@@ -12,6 +12,7 @@
 constexpr unsigned int JMP_SIZE = 14;
 
 HMODULE g_hModule;
+INIReader config;
 
 extern "C"
 {
@@ -19,6 +20,15 @@ extern "C"
     void CameraDistance();
     __m128 CameraDistanceMul;
     __m128 CameraDistanceAdd;
+
+    void CameraInterp();
+    __m128 InterpSpeedMul;
+    uintptr_t InterpReturn;
+
+    void LoadingEnd();
+    void LoadingBegin();
+    uintptr_t LoadingEndReturn;
+    uintptr_t LoadingBeginReturn;
 }
 
 std::string GetDefaultConfig()
@@ -38,7 +48,7 @@ std::string GetDefaultConfig()
     return std::string();
 }
 
-INIReader LoadConfig()
+void LoadConfig()
 {
     std::string configPath = ModUtils::GetModuleFolderPath() + "\\config.ini";
     INIReader reader(configPath);
@@ -70,12 +80,65 @@ INIReader LoadConfig()
         CameraDistanceAdd = _mm_set_ss(offset);
     }
 
-    return reader;
+    config = reader;
+}
+
+bool HookLoadState()
+{
+    {
+        std::vector<uint16_t> bytes({ 0x4C, 0x63, 0x43, 0x48, 0x4D, 0x03, 0xC0, 0x48, 0x8B, 0x43, 0x10, 0x48, 0x8B, 0xD6, 0x48, 0x8B, 0xCB });
+        uintptr_t hookAddress = ModUtils::SigScan(bytes);
+        if (!hookAddress)
+        {
+            return false;
+        }
+        uintptr_t toAddress = (uintptr_t)&LoadingBegin;
+        ModUtils::MemCopy(toAddress, hookAddress, bytes.size());
+        ModUtils::Hook(hookAddress, toAddress, bytes.size() - 14);
+        LoadingBeginReturn = hookAddress + bytes.size();
+    }
+
+    {
+        std::vector<uint16_t> bytes({ 0x48, 0x8B, 0xC4, 0x55, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57 });
+        uintptr_t hookAddress = ModUtils::SigScan(bytes);
+        if (!hookAddress)
+        {
+            return false;
+        }
+        uintptr_t toAddress = (uintptr_t)&LoadingEnd;
+        ModUtils::MemCopy(toAddress, hookAddress, bytes.size());
+        ModUtils::Hook(hookAddress, toAddress);
+        LoadingEndReturn = hookAddress + bytes.size();
+    }
+    return true;
+}
+
+bool HookPivotInterp()
+{
+    float follow_speed_multiplier = config.GetFloat("camera_interpolation", "follow_speed_multiplier", 0.f);
+    ModUtils::Log("using follow_speed_multiplier = %f", follow_speed_multiplier);
+    InterpSpeedMul = _mm_set_ss(follow_speed_multiplier);
+
+    // 16 bytes
+    std::vector<uint16_t> bytes = { 0xF3, 0x41, 0x0F, 0x10, 0x10, 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0x44, 0x24, 0x70, 0x0F, 0x28, 0xDA };
+    uintptr_t hookAddress = ModUtils::SigScan(bytes);
+    if (hookAddress)
+    {
+        uintptr_t toAddress = (uintptr_t)&CameraInterp;
+
+        // copy original instructions over to the custom function
+        // does not work with incremental linking
+        ModUtils::MemCopy(toAddress, hookAddress, bytes.size());
+        
+        ModUtils::Hook(hookAddress, toAddress, 2); // 16 bytes stolen - 14 bytes jump
+        InterpReturn = hookAddress + bytes.size();
+    }
+    return hookAddress != 0;
 }
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
-    INIReader config = LoadConfig();
+    LoadConfig();
     std::vector<uint16_t> original({ 0xF3, 0x0F, 0x11, 0xBB, 0xB8, 0x01 }); // movss [rbx + 1B8], xmm7 (2 MSBytes truncated)
     std::vector<uint8_t> replacement({ 0xFF, 0x25, 0x00, 0x00, 0x00, 0x00 }); // ff 25 00 00 00 00
     uintptr_t hookAddress = ModUtils::SigScan(original);
@@ -121,6 +184,14 @@ DWORD WINAPI MainThread(LPVOID lpParam)
             {
                 ModUtils::Replace(hookAddress, {0x66, 0x0f, 0x7f, 0x07}, {0x90, 0x90, 0x90, 0x90});
             }
+        }
+    }
+
+    //if (config.GetBoolean("camera_interpolation", "use_interpolation", false))
+    {
+        //if (HookPivotInterpCtrl())
+        {
+            HookPivotInterp();
         }
     }
 

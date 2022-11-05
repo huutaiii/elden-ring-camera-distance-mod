@@ -179,13 +179,16 @@ namespace ModUtils
 	}
 
 	// Scans the whole memory of the main process module for the given signature.
-	inline uintptr_t SigScan(std::vector<uint16_t> pattern)
+	inline uintptr_t SigScan(std::vector<uint16_t> pattern, bool logProcess = false)
 	{
 		DWORD processId = GetCurrentProcessId();
 		uintptr_t regionStart = GetProcessBaseAddress(processId);
-		Log("Process name: %s", GetModuleName(false).c_str());
-		Log("Process ID: %i", processId);
-		Log("Process base address: 0x%llX", regionStart);
+		if (logProcess)
+		{
+			Log("Process name: %s", GetModuleName(false).c_str());
+			Log("Process ID: %i", processId);
+			Log("Process base address: 0x%llX", regionStart);
+		}
 
 		std::string patternString = "";
 		for (auto bytes : pattern)

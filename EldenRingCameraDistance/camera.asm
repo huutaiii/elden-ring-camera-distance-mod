@@ -5,6 +5,7 @@
 	extern CameraDistanceAdd : dword
 
 .code
+
 	CameraDistance proc
 
 		movss xmm10, dword ptr [CameraDistanceMul]
@@ -17,5 +18,7 @@
 		mov eax, DWORD PTR [rbx + 1B8h] ; 6B
 
 		jmp QWORD PTR [ReturnAddress] ; 5B
+
 	CameraDistance endp
+
 end

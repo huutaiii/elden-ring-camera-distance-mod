@@ -37,6 +37,9 @@
     <MASM Include="camera.asm">
       <Filter>Source Files</Filter>
     </MASM>
+    <MASM Include="pivot.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />
@@ -52,5 +55,6 @@
   <ItemGroup>
     <Text Include="..\doc\ce_asm_snippet.txt" />
     <Text Include="..\doc\ce_asm_pivot_interpolation.txt" />
+    <Text Include="..\doc\ce_asm_gamethread.txt" />
   </ItemGroup>
 </Project>

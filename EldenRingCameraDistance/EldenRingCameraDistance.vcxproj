@@ -72,6 +72,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -161,6 +164,7 @@
     <MASM Include="camera.asm">
       <FileType>Document</FileType>
     </MASM>
+    <MASM Include="pivot.asm" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />
@@ -172,6 +176,7 @@
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="..\doc\ce_asm_gamethread.txt" />
     <Text Include="..\doc\ce_asm_pivot_interpolation.txt" />
     <Text Include="..\doc\ce_asm_snippet.txt" />
   </ItemGroup>

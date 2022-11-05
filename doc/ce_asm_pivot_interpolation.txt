@@ -1,0 +1,233 @@
+eldenring.exe+3B55F7 - 49 8B 4E 28           - mov rcx,[r14+28]
+eldenring.exe+3B55FB - E9 81A99600           - jmp eldenring.exe+D1FF81
+eldenring.exe+3B5600 - 48 8B C4              - mov rax,rsp
+eldenring.exe+3B5603 - 55                    - push rbp
+eldenring.exe+3B5604 - 56                    - push rsi
+eldenring.exe+3B5605 - 57                    - push rdi
+eldenring.exe+3B5606 - 48 8D 68 B8           - lea rbp,[rax-48]
+eldenring.exe+3B560A - 48 81 EC 30010000     - sub rsp,00000130 { 304 }
+eldenring.exe+3B5611 - 48 C7 44 24 38 FEFFFFFF - mov qword ptr [rsp+38],FFFFFFFFFFFFFFFE { -2 }
+eldenring.exe+3B561A - 48 89 58 10           - mov [rax+10],rbx
+eldenring.exe+3B561E - 0F29 70 D8            - movaps [rax-28],xmm6
+eldenring.exe+3B5622 - 0F29 78 C8            - movaps [rax-38],xmm7
+eldenring.exe+3B5626 - 44 0F29 40 B8         - movaps [rax-48],xmm8
+eldenring.exe+3B562B - 44 0F29 48 A8         - movaps [rax-58],xmm9
+eldenring.exe+3B5630 - 48 8B 05 C93E7903     - mov rax,[eldenring.exe+3B49500] { (-1488868391) }
+eldenring.exe+3B5637 - 48 33 C4              - xor rax,rsp
+eldenring.exe+3B563A - 48 89 45 E0           - mov [rbp-20],rax
+eldenring.exe+3B563E - 49 8B F1              - mov rsi,r9
+eldenring.exe+3B5641 - 49 8B F8              - mov rdi,r8
+eldenring.exe+3B5644 - 48 8B D9              - mov rbx,rcx
+eldenring.exe+3B5647 - 48 8D 55 80           - lea rdx,[rbp-80]
+eldenring.exe+3B564B - 49 8B C8              - mov rcx,r8
+eldenring.exe+3B564E - E8 1D7D0300           - call eldenring.exe+3ED370
+eldenring.exe+3B5653 - 48 8B D0              - mov rdx,rax
+eldenring.exe+3B5656 - 48 8D 4C 24 40        - lea rcx,[rsp+40]
+eldenring.exe+3B565B - E8 B0CDEAFF           - call eldenring.exe+262410
+eldenring.exe+3B5660 - 0F28 3D B943C302      - movaps xmm7,[eldenring.exe+2FE9A20] { (0) }
+eldenring.exe+3B5667 - 44 0F28 C7            - movaps xmm8,xmm7
+eldenring.exe+3B566B - 44 0F5C 44 24 40      - subps xmm8,[rsp+40]
+eldenring.exe+3B5671 - 0F5C 7C 24 60         - subps xmm7,[rsp+60]
+eldenring.exe+3B5676 - 66 0F6F 74 24 70      - movdqa xmm6,[rsp+70]
+eldenring.exe+3B567C - E8 3F852A00           - call eldenring.exe+65DBC0
+eldenring.exe+3B5681 - 85 C0                 - test eax,eax
+eldenring.exe+3B5683 - 78 56                 - js eldenring.exe+3B56DB
+eldenring.exe+3B5685 - 48 8D 4C 24 30        - lea rcx,[rsp+30]
+eldenring.exe+3B568A - 48 89 4D C0           - mov [rbp-40],rcx
+eldenring.exe+3B568E - 89 44 24 30           - mov [rsp+30],eax
+eldenring.exe+3B5692 - 4C 8D 44 24 30        - lea r8,[rsp+30]
+eldenring.exe+3B5697 - 48 8D 55 D0           - lea rdx,[rbp-30]
+eldenring.exe+3B569B - 48 8B CF              - mov rcx,rdi
+eldenring.exe+3B569E - E8 6D060300           - call eldenring.exe+3E5D10
+eldenring.exe+3B56A3 - F3 0F10 18            - movss xmm3,[rax]
+eldenring.exe+3B56A7 - F3 0F5C 9B 90010000   - subss xmm3,[rbx+00000190]
+eldenring.exe+3B56AF - F3 0F10 50 04         - movss xmm2,[rax+04]
+eldenring.exe+3B56B4 - F3 0F5C 93 94010000   - subss xmm2,[rbx+00000194]
+eldenring.exe+3B56BC - F3 0F10 40 08         - movss xmm0,[rax+08]
+eldenring.exe+3B56C1 - F3 0F5C 83 98010000   - subss xmm0,[rbx+00000198]
+eldenring.exe+3B56C9 - F3 0F10 4C 24 7C      - movss xmm1,[rsp+7C]
+eldenring.exe+3B56CF - 0F28 F3               - movaps xmm6,xmm3
+eldenring.exe+3B56D2 - 0F14 F0               - unpcklps xmm6,xmm0
+eldenring.exe+3B56D5 - 0F14 D1               - unpcklps xmm2,xmm1
+eldenring.exe+3B56D8 - 0F14 F2               - unpcklps xmm6,xmm2
+eldenring.exe+3B56DB - 44 0F29 43 70         - movaps [rbx+70],xmm8
+eldenring.exe+3B56E0 - 44 0F28 4C 24 50      - movaps xmm9,[rsp+50]
+eldenring.exe+3B56E6 - 44 0F29 8B 80000000   - movaps [rbx+00000080],xmm9
+eldenring.exe+3B56EE - 0F29 BB 90000000      - movaps [rbx+00000090],xmm7
+eldenring.exe+3B56F5 - 48 8D BB A0000000     - lea rdi,[rbx+000000A0]
+eldenring.exe+3B56FC - 0F29 37               - movaps [rdi],xmm6				; sets [rdi] = uninterpolated pivot position
+eldenring.exe+3B56FF - 80 BB 15030000 00     - cmp byte ptr [rbx+00000315],00 { 0 }
+eldenring.exe+3B5706 - 74 1E                 - je eldenring.exe+3B5726          ; NOP'ing this disables interpolation completely
+eldenring.exe+3B5708 - 0F57 C9               - xorps xmm1,xmm1
+eldenring.exe+3B570B - 0F29 8B 10020000      - movaps [rbx+00000210],xmm1
+eldenring.exe+3B5712 - 0F28 07               - movaps xmm0,[rdi]
+eldenring.exe+3B5715 - 66 0F7F 83 20020000   - movdqa [rbx+00000220],xmm0
+eldenring.exe+3B571D - 0F29 8B 30020000      - movaps [rbx+00000230],xmm1
+eldenring.exe+3B5724 - EB 4E                 - jmp eldenring.exe+3B5774
+eldenring.exe+3B5726 - F3 0F10 8B CC010000   - movss xmm1,[rbx+000001CC]
+eldenring.exe+3B572E - 0F57 D2               - xorps xmm2,xmm2
+eldenring.exe+3B5731 - 0F28 D9               - movaps xmm3,xmm1
+eldenring.exe+3B5734 - 0F28 E1               - movaps xmm4,xmm1
+eldenring.exe+3B5737 - 0F14 E1               - unpcklps xmm4,xmm1
+eldenring.exe+3B573A - 0F14 DA               - unpcklps xmm3,xmm2
+eldenring.exe+3B573D - 0F14 E3               - unpcklps xmm4,xmm3
+eldenring.exe+3B5740 - 0F29 65 C0            - movaps [rbp-40],xmm4
+eldenring.exe+3B5744 - 4C 8D 4E 30           - lea r9,[rsi+30]
+eldenring.exe+3B5748 - 4C 8D 83 8C040000     - lea r8,[rbx+0000048C]
+eldenring.exe+3B574F - 48 8D 8B 10020000     - lea rcx,[rbx+00000210]
+eldenring.exe+3B5756 - 48 8D 45 C0           - lea rax,[rbp-40]
+eldenring.exe+3B575A - 48 89 44 24 28        - mov [rsp+28],rax
+eldenring.exe+3B575F - 48 89 7C 24 20        - mov [rsp+20],rdi
+eldenring.exe+3B5764 - 48 8D 55 D0           - lea rdx,[rbp-30]
+eldenring.exe+3B5768 - E8 C3519D00           - call eldenring.exe+D8A930
+eldenring.exe+3B576D - 0F28 00               - movaps xmm0,[rax]			; [rax] = interpolated position
+eldenring.exe+3B5770 - 66 0F7F 07            - movdqa [rdi],xmm0			; [rdi] <- interpolated position
+eldenring.exe+3B5774 - F3 0F10 AB 90010000   - movss xmm5,[rbx+00000190]
+eldenring.exe+3B577C - 0FC6 ED 00            - shufps xmm5,xmm5,00 { 0 }
+eldenring.exe+3B5780 - F3 0F10 9B 94010000   - movss xmm3,[rbx+00000194]
+eldenring.exe+3B5788 - 0FC6 DB 00            - shufps xmm3,xmm3,00 { 0 }
+eldenring.exe+3B578C - F3 0F10 A3 98010000   - movss xmm4,[rbx+00000198]
+eldenring.exe+3B5794 - 0FC6 E4 00            - shufps xmm4,xmm4,00 { 0 }
+eldenring.exe+3B5798 - 0F28 D5               - movaps xmm2,xmm5
+eldenring.exe+3B579B - 41 0F59 D0            - mulps xmm2,xmm8
+eldenring.exe+3B579F - 0F58 D6               - addps xmm2,xmm6
+eldenring.exe+3B57A2 - 0F28 C3               - movaps xmm0,xmm3
+eldenring.exe+3B57A5 - 41 0F59 C1            - mulps xmm0,xmm9
+eldenring.exe+3B57A9 - 0F58 D0               - addps xmm2,xmm0
+eldenring.exe+3B57AC - 0F28 CC               - movaps xmm1,xmm4
+eldenring.exe+3B57AF - 0F59 CF               - mulps xmm1,xmm7
+eldenring.exe+3B57B2 - 0F58 D1               - addps xmm2,xmm1
+eldenring.exe+3B57B5 - 0F29 93 B0000000      - movaps [rbx+000000B0],xmm2
+eldenring.exe+3B57BC - 0F59 6B 70            - mulps xmm5,[rbx+70]
+eldenring.exe+3B57C0 - 0F58 AB A0000000      - addps xmm5,[rbx+000000A0]
+eldenring.exe+3B57C7 - 0F59 9B 80000000      - mulps xmm3,[rbx+00000080]
+eldenring.exe+3B57CE - 0F58 EB               - addps xmm5,xmm3
+eldenring.exe+3B57D1 - 0F59 A3 90000000      - mulps xmm4,[rbx+00000090]
+eldenring.exe+3B57D8 - 0F58 EC               - addps xmm5,xmm4
+eldenring.exe+3B57DB - 0F29 AB C0000000      - movaps [rbx+000000C0],xmm5
+eldenring.exe+3B57E2 - 0F29 AB D0000000      - movaps [rbx+000000D0],xmm5
+eldenring.exe+3B57E9 - 0F29 AB E0000000      - movaps [rbx+000000E0],xmm5
+eldenring.exe+3B57F0 - 48 8B 4D E0           - mov rcx,[rbp-20]
+eldenring.exe+3B57F4 - 48 33 CC              - xor rcx,rsp
+eldenring.exe+3B57F7 - E8 E4F20A02           - call eldenring.exe+2464AE0
+eldenring.exe+3B57FC - 4C 8D 9C 24 30010000  - lea r11,[rsp+00000130]
+eldenring.exe+3B5804 - 49 8B 5B 28           - mov rbx,[r11+28]
+eldenring.exe+3B5808 - 41 0F28 73 F0         - movaps xmm6,[r11-10]
+eldenring.exe+3B580D - 41 0F28 7B E0         - movaps xmm7,[r11-20]
+eldenring.exe+3B5812 - 45 0F28 43 D0         - movaps xmm8,[r11-30]
+eldenring.exe+3B5817 - 45 0F28 4B C0         - movaps xmm9,[r11-40]
+eldenring.exe+3B581C - 49 8B E3              - mov rsp,r11
+eldenring.exe+3B581F - 5F                    - pop rdi
+eldenring.exe+3B5820 - 5E                    - pop rsi
+eldenring.exe+3B5821 - 5D                    - pop rbp
+eldenring.exe+3B5822 - C3                    - ret 
+eldenring.exe+3B5823 - CC                    - int 3 
+
+
+; line 82 calls here
+eldenring.exe+D8A931 - 83 EC 48              - sub esp,48
+eldenring.exe+D8A934 - F3 41 0F10 60 04      - movss xmm4,[r8+04]					; xmm4 = frametime? Increasing this effectively increases interpolation speed
+eldenring.exe+D8A93A - F3 0F10 05 D2CC4402   - movss xmm0,[eldenring.exe+31D7614]
+eldenring.exe+D8A942 - 0F2F C4               - comiss xmm0,xmm4
+eldenring.exe+D8A945 - 76 0E                 - jna eldenring.exe+D8A955
+eldenring.exe+D8A947 - 0F57 C0               - xorps xmm0,xmm0
+eldenring.exe+D8A94A - 48 8B C2              - mov rax,rdx
+eldenring.exe+D8A94D - 0F29 02               - movaps [rdx],xmm0
+eldenring.exe+D8A950 - 48 83 C4 48           - add rsp,48
+eldenring.exe+D8A954 - C3                    - ret 
+										; hook starts here (16 bytes)
+eldenring.exe+D8A955 - F3 41 0F10 10         - movss xmm2,[r8]						; goes between ~0.1 and ~0.3?
+eldenring.exe+D8A95A - 0F57 C9               - xorps xmm1,xmm1
+eldenring.exe+D8A95D - 48 8B 44 24 70        - mov rax,[rsp+70]
+eldenring.exe+D8A962 - 0F28 DA               - movaps xmm3,xmm2
+eldenring.exe+D8A965 - F3 0F5C DC            - subss xmm3,xmm4
+eldenring.exe+D8A969 - 0F29 74 24 30         - movaps [rsp+30],xmm6
+eldenring.exe+D8A96E - 0F28 71 10            - movaps xmm6,[rcx+10]
+eldenring.exe+D8A972 - 0F28 00               - movaps xmm0,[rax]
+eldenring.exe+D8A975 - 66 0F7F 41 10         - movdqa [rcx+10],xmm0
+eldenring.exe+D8A97A - 0F2F D9               - comiss xmm3,xmm1
+eldenring.exe+D8A97D - 76 2D                 - jna eldenring.exe+D8A9AC
+eldenring.exe+D8A97F - 41 0F28 09            - movaps xmm1,[r9]
+eldenring.exe+D8A983 - 48 8B C2              - mov rax,rdx
+eldenring.exe+D8A986 - F3 0F5E 25 A2CC4402   - divss xmm4,[eldenring.exe+31D7630]
+eldenring.exe+D8A98E - 0F28 74 24 30         - movaps xmm6,[rsp+30]
+eldenring.exe+D8A993 - 0F28 C4               - movaps xmm0,xmm4
+eldenring.exe+D8A996 - 0FC6 C0 00            - shufps xmm0,xmm0,00
+eldenring.exe+D8A99A - 0F59 01               - mulps xmm0,[rcx]
+eldenring.exe+D8A99D - 0F58 C8               - addps xmm1,xmm0
+eldenring.exe+D8A9A0 - 0F29 49 20            - movaps [rcx+20],xmm1
+eldenring.exe+D8A9A4 - 0F29 0A               - movaps [rdx],xmm1
+eldenring.exe+D8A9A7 - 48 83 C4 48           - add rsp,48
+eldenring.exe+D8A9AB - C3                    - ret 
+eldenring.exe+D8A9AC - F3 0F10 2D 7CCC4402   - movss xmm5,[eldenring.exe+31D7630]
+eldenring.exe+D8A9B4 - 0F29 7C 24 20         - movaps [rsp+20],xmm7
+eldenring.exe+D8A9B9 - F3 0F10 3D 0FBED801   - movss xmm7,[eldenring.exe+2B167D0]
+eldenring.exe+D8A9C1 - 0F2F FB               - comiss xmm7,xmm3
+eldenring.exe+D8A9C4 - 44 0F29 44 24 10      - movaps [rsp+10],xmm8
+eldenring.exe+D8A9CA - 44 0F29 0C 24         - movaps [rsp],xmm9
+eldenring.exe+D8A9CF - 76 0D                 - jna eldenring.exe+D8A9DE
+eldenring.exe+D8A9D1 - F3 0F58 DD            - addss xmm3,xmm5
+eldenring.exe+D8A9D5 - F3 0F58 D5            - addss xmm2,xmm5
+eldenring.exe+D8A9D9 - 0F2F FB               - comiss xmm7,xmm3
+eldenring.exe+D8A9DC - 77 F3                 - ja eldenring.exe+D8A9D1
+eldenring.exe+D8A9DE - 0F2F D5               - comiss xmm2,xmm5
+eldenring.exe+D8A9E1 - 44 0F28 0D 377A4202   - movaps xmm9,[eldenring.exe+31B2420]
+eldenring.exe+D8A9E9 - F3 0F58 DD            - addss xmm3,xmm5
+eldenring.exe+D8A9ED - 0F28 C4               - movaps xmm0,xmm4
+eldenring.exe+D8A9F0 - 0F28 20               - movaps xmm4,[rax]
+eldenring.exe+D8A9F3 - 48 8B 44 24 78        - mov rax,[rsp+78]
+eldenring.exe+D8A9F8 - 0FC6 C0 00            - shufps xmm0,xmm0,00
+eldenring.exe+D8A9FC - 44 0F5E C8            - divps xmm9,xmm0
+eldenring.exe+D8AA00 - 44 0F28 00            - movaps xmm8,[rax]
+eldenring.exe+D8AA04 - 0F28 C4               - movaps xmm0,xmm4
+eldenring.exe+D8AA07 - 41 0F5C 21            - subps xmm4,[r9]
+eldenring.exe+D8AA0B - 0F5C C6               - subps xmm0,xmm6
+eldenring.exe+D8AA0E - F3 0F5E DD            - divss xmm3,xmm5
+eldenring.exe+D8AA12 - 44 0F59 C8            - mulps xmm9,xmm0
+eldenring.exe+D8AA16 - 0F28 C2               - movaps xmm0,xmm2
+eldenring.exe+D8AA19 - 0F28 CB               - movaps xmm1,xmm3
+eldenring.exe+D8AA1C - 0FC6 C0 00            - shufps xmm0,xmm0,00
+eldenring.exe+D8AA20 - 0FC6 C9 00            - shufps xmm1,xmm1,00
+eldenring.exe+D8AA24 - 41 0F28 D8            - movaps xmm3,xmm8
+eldenring.exe+D8AA28 - 0F59 09               - mulps xmm1,[rcx]
+eldenring.exe+D8AA2B - 41 0F59 C1            - mulps xmm0,xmm9
+eldenring.exe+D8AA2F - 0F58 E1               - addps xmm4,xmm1
+eldenring.exe+D8AA32 - 0F5C E0               - subps xmm4,xmm0
+eldenring.exe+D8AA35 - 0F59 DC               - mulps xmm3,xmm4
+eldenring.exe+D8AA38 - 0F28 F3               - movaps xmm6,xmm3
+eldenring.exe+D8AA3B - 0F5C F1               - subps xmm6,xmm1
+eldenring.exe+D8AA3E - 72 2C                 - jb eldenring.exe+D8AA6C
+eldenring.exe+D8AA40 - 0F28 0D 99BDD801      - movaps xmm1,[eldenring.exe+2B167E0]
+eldenring.exe+D8AA47 - 41 0F59 C9            - mulps xmm1,xmm9
+eldenring.exe+D8AA4B - 0F1F 44 00 00         - nop dword ptr [rax+rax+00]
+eldenring.exe+D8AA50 - 0F28 C1               - movaps xmm0,xmm1
+eldenring.exe+D8AA53 - F3 0F58 D7            - addss xmm2,xmm7
+eldenring.exe+D8AA57 - 0F5C C3               - subps xmm0,xmm3
+eldenring.exe+D8AA5A - 41 0F28 D8            - movaps xmm3,xmm8
+eldenring.exe+D8AA5E - 0F2F D5               - comiss xmm2,xmm5
+eldenring.exe+D8AA61 - 0F58 E0               - addps xmm4,xmm0
+eldenring.exe+D8AA64 - 0F59 DC               - mulps xmm3,xmm4
+eldenring.exe+D8AA67 - 0F58 F3               - addps xmm6,xmm3
+eldenring.exe+D8AA6A - 73 E4                 - jae eldenring.exe+D8AA50
+eldenring.exe+D8AA6C - 0F28 0D 6DBDD801      - movaps xmm1,[eldenring.exe+2B167E0]
+eldenring.exe+D8AA73 - 48 8B C2              - mov rax,rdx
+eldenring.exe+D8AA76 - 0F28 7C 24 20         - movaps xmm7,[rsp+20]
+eldenring.exe+D8AA7B - 41 0F59 C9            - mulps xmm1,xmm9
+eldenring.exe+D8AA7F - 44 0F28 0C 24         - movaps xmm9,[rsp]
+eldenring.exe+D8AA84 - 0F5C CB               - subps xmm1,xmm3
+eldenring.exe+D8AA87 - 0F58 CC               - addps xmm1,xmm4
+eldenring.exe+D8AA8A - 41 0F59 C8            - mulps xmm1,xmm8
+eldenring.exe+D8AA8E - 44 0F28 44 24 10      - movaps xmm8,[rsp+10]
+eldenring.exe+D8AA94 - 0F29 09               - movaps [rcx],xmm1
+eldenring.exe+D8AA97 - F3 41 0F10 00         - movss xmm0,[r8]
+eldenring.exe+D8AA9C - F3 0F5E C5            - divss xmm0,xmm5
+eldenring.exe+D8AAA0 - 0F28 D0               - movaps xmm2,xmm0
+eldenring.exe+D8AAA3 - 0FC6 D2 00            - shufps xmm2,xmm2,00
+eldenring.exe+D8AAA7 - 0F59 D1               - mulps xmm2,xmm1
+eldenring.exe+D8AAAA - 0F58 D6               - addps xmm2,xmm6
+eldenring.exe+D8AAAD - 0F28 74 24 30         - movaps xmm6,[rsp+30]
+eldenring.exe+D8AAB2 - 41 0F58 11            - addps xmm2,[r9]
+eldenring.exe+D8AAB6 - 0F29 51 20            - movaps [rcx+20],xmm2
+eldenring.exe+D8AABA - 0F29 12               - movaps [rdx],xmm2
+eldenring.exe+D8AABD - 48 83 C4 48           - add rsp,48
+eldenring.exe+D8AAC1 - C3                    - ret 
