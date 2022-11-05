@@ -81,12 +81,10 @@ eldenring.exe+3B575F - 48 89 7C 24 20        - mov [rsp+20],rdi
 eldenring.exe+3B5764 - 48 8D 55 D0           - lea rdx,[rbp-30]
 eldenring.exe+3B5768 - E8 C3519D00           - call eldenring.exe+D8A930
 eldenring.exe+3B576D - 0F28 00               - movaps xmm0,[rax]			; [rax] = interpolated position
-eldenring.exe+3B5770 - 66 0F7F 07            - movdqa [rdi],xmm0			; [rdi] <- interpolated position, NOP this since we're handling interpolation;
-												; hook starts here
+eldenring.exe+3B5770 - 66 0F7F 07            - movdqa [rdi],xmm0			; [rdi] <- interpolated position
 eldenring.exe+3B5774 - F3 0F10 AB 90010000   - movss xmm5,[rbx+00000190]
 eldenring.exe+3B577C - 0FC6 ED 00            - shufps xmm5,xmm5,00 { 0 }
 eldenring.exe+3B5780 - F3 0F10 9B 94010000   - movss xmm3,[rbx+00000194]
-												; hook ends here
 eldenring.exe+3B5788 - 0FC6 DB 00            - shufps xmm3,xmm3,00 { 0 }
 eldenring.exe+3B578C - F3 0F10 A3 98010000   - movss xmm4,[rbx+00000198]
 eldenring.exe+3B5794 - 0FC6 E4 00            - shufps xmm4,xmm4,00 { 0 }
@@ -128,7 +126,7 @@ eldenring.exe+3B5823 - CC                    - int 3
 
 ; line 82 calls here
 eldenring.exe+D8A931 - 83 EC 48              - sub esp,48
-eldenring.exe+D8A934 - F3 41 0F10 60 04      - movss xmm4,[r8+04]					; xmm4 = frametime?
+eldenring.exe+D8A934 - F3 41 0F10 60 04      - movss xmm4,[r8+04]					; xmm4 = frametime? Increasing this effectively increases interpolation speed
 eldenring.exe+D8A93A - F3 0F10 05 D2CC4402   - movss xmm0,[eldenring.exe+31D7614]
 eldenring.exe+D8A942 - 0F2F C4               - comiss xmm0,xmm4
 eldenring.exe+D8A945 - 76 0E                 - jna eldenring.exe+D8A955
@@ -137,7 +135,8 @@ eldenring.exe+D8A94A - 48 8B C2              - mov rax,rdx
 eldenring.exe+D8A94D - 0F29 02               - movaps [rdx],xmm0
 eldenring.exe+D8A950 - 48 83 C4 48           - add rsp,48
 eldenring.exe+D8A954 - C3                    - ret 
-eldenring.exe+D8A955 - F3 41 0F10 10         - movss xmm2,[r8]
+										; hook starts here (16 bytes)
+eldenring.exe+D8A955 - F3 41 0F10 10         - movss xmm2,[r8]						; goes between ~0.1 and ~0.3?
 eldenring.exe+D8A95A - 0F57 C9               - xorps xmm1,xmm1
 eldenring.exe+D8A95D - 48 8B 44 24 70        - mov rax,[rsp+70]
 eldenring.exe+D8A962 - 0F28 DA               - movaps xmm3,xmm2

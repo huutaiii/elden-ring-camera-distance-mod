@@ -1,42 +1,28 @@
 .data
 
 	extern InterpReturn : qword
-	extern LerpAlpha : dword
-	extern LerpOneMinusAlpha : dword
+	extern InterpSpeedMul : dword
 
-	extern InterpEnableReturn : qword
-	extern InterpDisableReturn : qword
+	extern LoadingEndReturn : qword
+	extern LoadingBeginReturn : qword
 
 	bUseInterp byte 0
 
 .code
 
 	CameraInterp proc
-		repeat 30
+		repeat 16
 			nop
 		endm
 
-		movdqa[rdi], xmm0
-		jmp qword ptr [InterpReturn]
-		nop
-
-		movss xmm11, dword ptr [LerpOneMinusAlpha]
-		movss xmm12, dword ptr [LerpAlpha]
-		shufps xmm11, xmm11, 00h
-		shufps xmm12, xmm12, 00h
-		
-		mulps xmm11, xmmword ptr [rax]
-		mulps xmm12, xmmword ptr [rdi]
-		
-		addps xmm11, xmm12
-		movdqa xmmword ptr [rdi], xmm11
+		mulss xmm4, [InterpSpeedMul]
 		
 		jmp qword ptr [InterpReturn]
 
 	CameraInterp endp
 
 
-	CameraInterpEnable proc
+	LoadingEnd proc
 		;movsxd r8,dword ptr [rbx+48]
 		;add r8,r8
 		;mov rax,[rbx+10]
@@ -47,11 +33,11 @@
 		endm
 
 		mov [bUseInterp], 1
-		jmp qword ptr [InterpEnableReturn]
-	CameraInterpEnable endp
+		jmp qword ptr [LoadingEndReturn]
+	LoadingEnd endp
 
 
-	CameraInterpDisable proc
+	LoadingBegin proc
 		;mov rax,rsp	
 		;push rbp
 		;push rsi
@@ -65,8 +51,8 @@
 		endm
 
 		mov [bUseInterp], 0
-		jmp qword ptr [InterpDisableReturn]
-	CameraInterpDisable endp
+		jmp qword ptr [LoadingBeginReturn]
+	LoadingBegin endp
 
 
 end

@@ -22,14 +22,13 @@ extern "C"
     __m128 CameraDistanceAdd;
 
     void CameraInterp();
+    __m128 InterpSpeedMul;
     uintptr_t InterpReturn;
-    __m128 LerpAlpha;
-    __m128 LerpOneMinusAlpha;
 
-    void CameraInterpEnable();
-    void CameraInterpDisable();
-    uintptr_t InterpEnableReturn;
-    uintptr_t InterpDisableReturn;
+    void LoadingEnd();
+    void LoadingBegin();
+    uintptr_t LoadingEndReturn;
+    uintptr_t LoadingBeginReturn;
 }
 
 std::string GetDefaultConfig()
@@ -84,7 +83,7 @@ void LoadConfig()
     config = reader;
 }
 
-bool HookPivotInterpCtrl()
+bool HookLoadState()
 {
     {
         std::vector<uint16_t> bytes({ 0x4C, 0x63, 0x43, 0x48, 0x4D, 0x03, 0xC0, 0x48, 0x8B, 0x43, 0x10, 0x48, 0x8B, 0xD6, 0x48, 0x8B, 0xCB });
@@ -93,11 +92,10 @@ bool HookPivotInterpCtrl()
         {
             return false;
         }
-        ModUtils::Log("Hooking CameraInterpDisable");
-        uintptr_t toAddress = (uintptr_t)&CameraInterpDisable;
+        uintptr_t toAddress = (uintptr_t)&LoadingBegin;
         ModUtils::MemCopy(toAddress, hookAddress, bytes.size());
         ModUtils::Hook(hookAddress, toAddress, bytes.size() - 14);
-        InterpDisableReturn = hookAddress + bytes.size();
+        LoadingBeginReturn = hookAddress + bytes.size();
     }
 
     {
@@ -107,36 +105,33 @@ bool HookPivotInterpCtrl()
         {
             return false;
         }
-        ModUtils::Log("Hooking CameraInterpEnable");
-        uintptr_t toAddress = (uintptr_t)&CameraInterpEnable;
+        uintptr_t toAddress = (uintptr_t)&LoadingEnd;
         ModUtils::MemCopy(toAddress, hookAddress, bytes.size());
         ModUtils::Hook(hookAddress, toAddress);
-        InterpEnableReturn = hookAddress + bytes.size();
+        LoadingEndReturn = hookAddress + bytes.size();
     }
     return true;
 }
 
 bool HookPivotInterp()
 {
-    float interp_alpha = config.GetFloat("camera_interpolation", "interpolation_alpha", 0.f);
-    ModUtils::Log("using interp_alpha = %f", interp_alpha);
-    LerpAlpha = _mm_set_ss(interp_alpha);
-    LerpOneMinusAlpha = _mm_set_ss(1.f - interp_alpha);
+    float follow_speed_multiplier = config.GetFloat("camera_interpolation", "follow_speed_multiplier", 0.f);
+    ModUtils::Log("using follow_speed_multiplier = %f", follow_speed_multiplier);
+    InterpSpeedMul = _mm_set_ss(follow_speed_multiplier);
 
-    //std::vector<uint16_t> bytes({ 0xE8, 0xC3, 0x51, 0x9D, 0x00, 0x0F, 0x28, 0x00, 0x66, 0x0F, 0x7F, 0x07, 0xF3, 0x0F, 0x10, 0xAB, 0x90, 0x01, 0x00, 0x00 });
-    // 20 bytes
-    std::vector<uint16_t> bytes({0xF3, 0x0F, 0x10, 0xAB, 0x90, 0x01, 0x00, 0x00, 0x0F, 0xC6, 0xED, 0x00, 0xF3, 0x0F, 0x10, 0x9B, 0x94, 0x01, 0x00, 0x00});
+    // 16 bytes
+    std::vector<uint16_t> bytes = { 0xF3, 0x41, 0x0F, 0x10, 0x10, 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0x44, 0x24, 0x70, 0x0F, 0x28, 0xDA };
     uintptr_t hookAddress = ModUtils::SigScan(bytes);
     if (hookAddress)
     {
         uintptr_t toAddress = (uintptr_t)&CameraInterp;
-        ModUtils::Log("Creating jump to %p", toAddress);
-        //ModUtils::Replace(hookAddress, bytes, std::vector<uint8_t>(bytes.size(), 0x90));
-        ModUtils::MemCopy(toAddress, hookAddress, 20);
-        ModUtils::MemSet(hookAddress - 4, 0x90, 24);
-        ModUtils::Replace(hookAddress, std::vector<uint16_t>(6, 0x90), {0xff, 0x25, 0, 0, 0, 0});
-        ModUtils::MemCopy(hookAddress + (JMP_SIZE - 8), (uintptr_t)&toAddress, 8);
-        InterpReturn = hookAddress + 20;
+
+        // copy original instructions over to the custom function
+        // does not work with incremental linking
+        ModUtils::MemCopy(toAddress, hookAddress, bytes.size());
+        
+        ModUtils::Hook(hookAddress, toAddress, 2); // 16 bytes stolen - 14 bytes jump
+        InterpReturn = hookAddress + bytes.size();
     }
     return hookAddress != 0;
 }
@@ -192,7 +187,7 @@ DWORD WINAPI MainThread(LPVOID lpParam)
         }
     }
 
-    if (config.GetBoolean("camera_interpolation", "use_interpolation", false))
+    //if (config.GetBoolean("camera_interpolation", "use_interpolation", false))
     {
         //if (HookPivotInterpCtrl())
         {
