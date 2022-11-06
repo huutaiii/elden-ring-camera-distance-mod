@@ -115,7 +115,7 @@ bool HookLoadState()
 
 bool HookPivotInterp()
 {
-    float follow_speed_multiplier = config.GetFloat("camera_interpolation", "follow_speed_multiplier", 0.f);
+    float follow_speed_multiplier = config.GetFloat("camera_interpolation", "follow_speed_multiplier", 1.f);
     ModUtils::Log("using follow_speed_multiplier = %f", follow_speed_multiplier);
     InterpSpeedMul = _mm_set_ss(follow_speed_multiplier);
 
