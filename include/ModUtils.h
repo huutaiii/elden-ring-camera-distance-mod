@@ -541,7 +541,7 @@ namespace ModUtils
 	// The target procedure must have at least pattern.size() NOP's at the beginning to be overwritten
 	// Returns the address to the code after the jump that was written over the original byte array
 	// return_address = &[pattern] + pattern.size() if the pattern was found otherwise 0
-	inline uintptr_t SigScanAndHook(std::vector<uint16_t> pattern, void (*dstPtr)())
+	inline uintptr_t SigScanAndHook(std::vector<uint16_t> pattern, void (*dstPtr)(), std::vector<uint16_t>::iterator begin, std::vector<uint16_t>::iterator end, std::string errormsg)
 	{
 		uintptr_t dstAddr = (uintptr_t)dstPtr;
 		if (pattern.size() < 14)
@@ -555,6 +555,21 @@ namespace ModUtils
 			Hook(hookAddr, dstAddr, pattern.size() - 14);
 			return hookAddr + pattern.size();
 		}
+
+		if (errormsg.length() > 0)
+		{
+			RaiseError(errormsg);
+		}
 		return 0;
+	}
+
+	// Scans for a byte array and replace it with a 14 bytes absolute jump to dstAddr
+	// The pattern size must be >= 14
+	// The target procedure must have at least pattern.size() NOP's at the beginning to be overwritten
+	// Returns the address to the code after the jump that was written over the original byte array
+	// return_address = &[pattern] + pattern.size() if the pattern was found otherwise 0
+	inline uintptr_t SigScanAndHook(std::vector<uint16_t> pattern, void (*dstPtr)(), std::string errormsg = "")
+	{
+		return SigScanAndHook(pattern, dstPtr, pattern.begin(), pattern.end(), errormsg);
 	}
 }

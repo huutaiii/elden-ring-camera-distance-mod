@@ -155,27 +155,17 @@ bool HookPivotInterp()
     }
 }
 
+bool HookCameraDistance()
+{
+    std::vector<uint16_t> bytes({ 0x48, 0x8D, 0x4C, 0x24, 0x20, 0x44, 0x0F, 0x28, 0xD8, 0xF3, 0x45, 0x0F, 0x59, 0xDF });
+    ReturnAddress = ModUtils::SigScanAndHook(bytes, &CameraDistance);
+    return ReturnAddress != 0;
+}
+
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
     LoadConfig();
-    std::vector<uint16_t> original({ 0xF3, 0x0F, 0x11, 0xBB, 0xB8, 0x01 }); // movss [rbx + 1B8], xmm7 (2 MSBytes truncated)
-    std::vector<uint8_t> replacement({ 0xFF, 0x25, 0x00, 0x00, 0x00, 0x00 }); // ff 25 00 00 00 00
-    uintptr_t hookAddress = ModUtils::SigScan(original);
-    if (hookAddress)
-    {
-        uintptr_t targetAddress = (uintptr_t)&CameraDistance;
-
-        ModUtils::Log("Applying patch at %p", hookAddress);
-        ModUtils::Log("Target address: %p", targetAddress);
-
-        ModUtils::Replace(hookAddress, original, replacement);
-        ModUtils::MemCopy(hookAddress + (JMP_SIZE - 8), (uintptr_t)&targetAddress, 8);
-        ReturnAddress = hookAddress + JMP_SIZE;
-    }
-    else
-    {
-        ModUtils::RaiseError(ModUtils::GetModuleName() + ": Search failed. Nothing is modified.");
-    }
+    HookCameraDistance();
 
     if (config.GetBoolean("camera_interpolation", "disable_lag", false))
     {
