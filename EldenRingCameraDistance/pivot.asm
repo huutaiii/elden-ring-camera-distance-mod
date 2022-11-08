@@ -2,6 +2,8 @@
 
 	extern InterpReturn : qword
 	extern InterpSpeedMul : dword
+	extern vInterpSpeedMul : xmmword
+	extern InterpRetAlt : qword
 
 	extern LoadingEndReturn : qword
 	extern LoadingBeginReturn : qword
@@ -21,6 +23,15 @@
 
 	CameraInterp endp
 
+	CamInterpAlt proc
+		repeat 14
+			nop
+		endm
+
+		mulps xmm8, [vInterpSpeedMul]
+
+		jmp [InterpRetAlt]
+	CamInterpAlt endp
 
 	LoadingEnd proc
 		;movsxd r8,dword ptr [rbx+48]

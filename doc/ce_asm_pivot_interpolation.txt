@@ -178,7 +178,7 @@ eldenring.exe+D8A9F0 - 0F28 20               - movaps xmm4,[rax]
 eldenring.exe+D8A9F3 - 48 8B 44 24 78        - mov rax,[rsp+78]
 eldenring.exe+D8A9F8 - 0FC6 C0 00            - shufps xmm0,xmm0,00
 eldenring.exe+D8A9FC - 44 0F5E C8            - divps xmm9,xmm0
-eldenring.exe+D8AA00 - 44 0F28 00            - movaps xmm8,[rax]
+eldenring.exe+D8AA00 - 44 0F28 00            - movaps xmm8,[rax] ; xmm8 controls per-component interpolation speed (2nd comp being height), it changes every frame tho
 eldenring.exe+D8AA04 - 0F28 C4               - movaps xmm0,xmm4
 eldenring.exe+D8AA07 - 41 0F5C 21            - subps xmm4,[r9]
 eldenring.exe+D8AA0B - 0F5C C6               - subps xmm0,xmm6

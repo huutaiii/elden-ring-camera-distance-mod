@@ -535,4 +535,26 @@ namespace ModUtils
 		MemCopy((address + 6), (uintptr_t)&destination, 8);
 		Log("Created jump from %p to %p with a clearance of %i", address, destination, clearance);
 	}
+
+	// Scans for a byte array and replace it with a 14 bytes absolute jump to dstAddr
+	// The pattern size must be >= 14
+	// The target procedure must have at least pattern.size() NOP's at the beginning to be overwritten
+	// Returns the address to the code after the jump that was written over the original byte array
+	// return_address = &[pattern] + pattern.size() if the pattern was found otherwise 0
+	inline uintptr_t SigScanAndHook(std::vector<uint16_t> pattern, void (*dstPtr)())
+	{
+		uintptr_t dstAddr = (uintptr_t)dstPtr;
+		if (pattern.size() < 14)
+		{
+			throw std::invalid_argument("Byte array too sort.");
+		}
+		uintptr_t hookAddr = SigScan(pattern);
+		if (hookAddr)
+		{
+			MemCopy(dstAddr, hookAddr, pattern.size());
+			Hook(hookAddr, dstAddr, pattern.size() - 14);
+			return hookAddr + pattern.size();
+		}
+		return 0;
+	}
 }

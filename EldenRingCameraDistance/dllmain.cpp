@@ -24,12 +24,17 @@ extern "C"
     void CameraInterp();
     __m128 InterpSpeedMul;
     uintptr_t InterpReturn;
+    void CamInterpAlt();
+    __m128 vInterpSpeedMul;
+    uintptr_t InterpRetAlt;
 
     void LoadingEnd();
     void LoadingBegin();
     uintptr_t LoadingEndReturn;
     uintptr_t LoadingBeginReturn;
 }
+
+constexpr bool USE_CAM_INTERP_ALT = true;
 
 std::string GetDefaultConfig()
 {
@@ -116,24 +121,38 @@ bool HookLoadState()
 bool HookPivotInterp()
 {
     float follow_speed_multiplier = config.GetFloat("camera_interpolation", "follow_speed_multiplier", 1.f);
+    float speed_mul_z = config.GetFloat("camera_interpolation", "follow_speed_multiplier_z", 0.f);
     ModUtils::Log("using follow_speed_multiplier = %f", follow_speed_multiplier);
+    ModUtils::Log("using follow_speed_multiplier_z = %f", speed_mul_z);
     InterpSpeedMul = _mm_set_ss(follow_speed_multiplier);
+    vInterpSpeedMul = (speed_mul_z > 0.f) ? _mm_setr_ps(follow_speed_multiplier, speed_mul_z, follow_speed_multiplier, 0.f)
+        : _mm_setr_ps(follow_speed_multiplier, follow_speed_multiplier, follow_speed_multiplier, 0.f);
 
-    // 16 bytes
-    std::vector<uint16_t> bytes = { 0xF3, 0x41, 0x0F, 0x10, 0x10, 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0x44, 0x24, 0x70, 0x0F, 0x28, 0xDA };
-    uintptr_t hookAddress = ModUtils::SigScan(bytes);
-    if (hookAddress)
+    InterpReturn = 0;
+    if (!USE_CAM_INTERP_ALT)
     {
-        uintptr_t toAddress = (uintptr_t)&CameraInterp;
+        // 16 bytes
+        std::vector<uint16_t> bytes = { 0xF3, 0x41, 0x0F, 0x10, 0x10, 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0x44, 0x24, 0x70, 0x0F, 0x28, 0xDA };
+        uintptr_t hookAddress = ModUtils::SigScan(bytes);
+        if (hookAddress)
+        {
+            uintptr_t toAddress = (uintptr_t)&CameraInterp;
 
-        // copy original instructions over to the custom function
-        // does not work with incremental linking
-        ModUtils::MemCopy(toAddress, hookAddress, bytes.size());
-        
-        ModUtils::Hook(hookAddress, toAddress, 2); // 16 bytes stolen - 14 bytes jump
-        InterpReturn = hookAddress + bytes.size();
+            // copy original instructions over to the custom function
+            // does not work with incremental linking
+            ModUtils::MemCopy(toAddress, hookAddress, bytes.size());
+
+            ModUtils::Hook(hookAddress, toAddress, 2); // 16 bytes stolen - 14 bytes jump
+            InterpReturn = hookAddress + bytes.size();
+        }
+        return hookAddress != 0;
     }
-    return hookAddress != 0;
+    else
+    {
+        std::vector<uint16_t> bytes = { 0x44, 0x0F, 0x28, 0x00, 0x0F, 0x28, 0xC4, 0x41, 0x0F, 0x5C, 0x21, 0x0F, 0x5C, 0xC6 }; // 14B
+        InterpRetAlt = ModUtils::SigScanAndHook(bytes, &CamInterpAlt);
+        return InterpRetAlt != 0;
+    }
 }
 
 DWORD WINAPI MainThread(LPVOID lpParam)
