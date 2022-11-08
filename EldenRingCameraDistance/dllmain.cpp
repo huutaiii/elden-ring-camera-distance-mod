@@ -58,6 +58,14 @@ void LoadConfig()
     std::string configPath = ModUtils::GetModuleFolderPath() + "\\config.ini";
     INIReader reader(configPath);
 
+    {
+        std::ofstream file;
+        file.open(ModUtils::GetModuleFolderPath() + "\\config_default.ini");
+        file << ";don't edit this file, it's here just to show the default configuration" << std::endl;
+        file << GetDefaultConfig();
+        file.close();
+    }
+
     if (reader.ParseError())
     {
         ModUtils::Log("Cannot load config file");
@@ -66,6 +74,7 @@ void LoadConfig()
         std::string configDefault = GetDefaultConfig();
         std::ofstream configFile;
         configFile.open(configPath);
+        configFile << ";delete this file to restore mod defaults" << std::endl;
         configFile << configDefault;
         configFile.close();
 

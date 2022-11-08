@@ -126,7 +126,7 @@
     </Link>
     <PostBuildEvent />
     <PostBuildEvent>
-      <Command>powershell.exe -File $(SolutionDir)install.ps1 -SolutionDir $(SolutionDir) -TargetName $(ProjectName) -Configuration $(ConfigurationName) -Platform $(PlatformName)  -DeleteConfig</Command>
+      <Command>powershell.exe -File $(SolutionDir)install.ps1 -SolutionDir $(SolutionDir) -TargetName $(ProjectName) -Configuration $(ConfigurationName) -Platform $(PlatformName)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -148,7 +148,7 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe -File $(SolutionDir)install.ps1 -SolutionDir $(SolutionDir) -TargetName $(ProjectName) -Configuration $(ConfigurationName) -Platform $(PlatformName)  -DeleteConfig</Command>
+      <Command>powershell.exe -File $(SolutionDir)install.ps1 -SolutionDir $(SolutionDir) -TargetName $(ProjectName) -Configuration $(ConfigurationName) -Platform $(PlatformName)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
