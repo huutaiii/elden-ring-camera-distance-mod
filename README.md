@@ -9,7 +9,4 @@ This mod requires [EldenRingModLoader](https://github.com/techiew/EldenRingModLo
 A default configuration is created when the mod is loaded for the first time. 
 Refer to the config file in the mod's directory for more information.
 ## Credits
-Thanks to ***techiew*** for *EldenRingModLoader* and "ModUtils.h"  
-## TODO
-- camera distance calculations are a bit wacky... may need to investigate that.
-- FoV offset (it seems that Elden Ring has different FoV values dependent on who your opponent is, as seen in the Regulation.bin file)
+Thanks to ***techiew*** for *EldenRingModLoader* and "ModUtils.h"
