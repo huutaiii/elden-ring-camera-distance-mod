@@ -21,6 +21,9 @@ extern "C"
     __m128 CameraDistanceMul;
     __m128 CameraDistanceAdd;
 
+    void ModifyFoV();
+    __m128 FoVMul;
+
     void CameraInterp();
     __m128 InterpSpeedMul;
     uintptr_t InterpReturn;
@@ -86,12 +89,16 @@ void LoadConfig()
         ModUtils::Log("Reading config");
 
         float multiplier = reader.GetFloat("camera_distance", "multiplier", 1.f);
-        ModUtils::Log("using multiplier = %f", multiplier);
+        ModUtils::Log("using distance multiplier = %f", multiplier);
         CameraDistanceMul = _mm_set_ss(multiplier);
 
         float offset = reader.GetFloat("camera_distance", "flat_offset", 0.f);
         ModUtils::Log("using offset = %f", offset);
         CameraDistanceAdd = _mm_set_ss(offset);
+
+        float fovmul = reader.GetFloat("fov", "multiplier", 1.0f);
+        ModUtils::Log("using fov multiplier = %f", fovmul);
+        FoVMul = _mm_set_ss(fovmul);
 
         float follow_speed_multiplier = reader.GetFloat("camera_interpolation", "follow_speed_multiplier", 1.f);
         float speed_mul_z = reader.GetFloat("camera_interpolation", "follow_speed_multiplier_z", 0.f);
@@ -353,10 +360,10 @@ public:
     {
         Init();
     }
-    UHookRelativeIntermediate(const std::vector<BYTE>& signature, size_t numStolenBytes, LPVOID destination)
+    UHookRelativeIntermediate(std::vector<uint16_t> signature, size_t numStolenBytes, LPVOID destination, size_t offset = 0)
         : numBytes(numStolenBytes), lpDestination(destination)
     {
-        lpHook = reinterpret_cast<LPVOID>(ModUtils::SigScan(std::vector<uint16_t>(signature.begin(), signature.end())));
+        lpHook = reinterpret_cast<LPVOID>(ModUtils::SigScan(signature) + offset);
         bCanHook = lpHook != nullptr;
         Init();
     }
@@ -366,7 +373,7 @@ public:
 
     void Enable()
     {
-        if (bEnabled) { return; }
+        if (!bCanHook || bEnabled) { return; }
         ModUtils::Log("Enabling hook from %p to %p", lpHook, lpDestination);
 
         // pad the jump in case numBytes > jump instruction size
@@ -389,16 +396,28 @@ public:
 const std::vector<uint8_t> UHookRelativeIntermediate::rspDown({ 0x48, 0x83, 0xC4, 0xF8 });
 const std::vector<uint8_t> UHookRelativeIntermediate::rspUp({ 0x48, 0x83, 0xC4, 0x08 });
 
+static decltype(ModUtils::MASKED) MASK = ModUtils::MASKED;
+//using ModUtils::MASKED;
+//#define MASK MASKED
+
 UHookRelativeIntermediate HookCameraDistance(
-    std::vector<uint8_t>({ 0x48, 0x8D, 0x4C, 0x24, 0x20, 0x44, 0x0F, 0x28, 0xD8, 0xF3, 0x45, 0x0F, 0x59, 0xDF }),
+    std::vector<uint16_t>({ 0x48, 0x8D, 0x4C, 0x24, 0x20, 0x44, 0x0F, 0x28, 0xD8, 0xF3, 0x45, 0x0F, 0x59, 0xDF }),
     5,
     &CameraDistanceAlt
 );
 
 UHookRelativeIntermediate HookPivotInterp(
-    std::vector<uint8_t>({ 0x0F, 0x28, 0xC4, 0x41, 0x0F, 0x5C, 0x21, 0x0F, 0x5C, 0xC6, 0xF3, 0x0F, 0x5E, 0xDD }),
+    std::vector<uint16_t>({ 0x0F, 0x28, 0xC4, 0x41, 0x0F, 0x5C, 0x21, 0x0F, 0x5C, 0xC6, 0xF3, 0x0F, 0x5E, 0xDD }),
     7,
     &CamInterpAlt
+);
+
+// Thanks to uberhalit (uberhalit/EldenRingFpsUnlockAndMore) for the disassembly
+auto FOV_PATTERN = std::vector<uint16_t>({ 0x80, 0xBB, MASK, MASK, MASK, MASK, 0x00, MASK, 0x0F, 0x28, MASK, 0xF3, MASK, 0x0F, 0x10, MASK, MASK, MASK, MASK, MASK, MASK, 0x0F, 0x57, MASK, 0xF3, MASK, 0x0F, 0x59, MASK });
+UHookRelativeIntermediate HookFoVMul(
+    FOV_PATTERN,
+    7,
+    &ModifyFoV
 );
 
 DWORD WINAPI MainThread(LPVOID lpParam)
@@ -412,6 +431,7 @@ DWORD WINAPI MainThread(LPVOID lpParam)
     LoadConfig();
     HookCameraDistance.Enable();
     HookPivotInterp.Enable();
+    HookFoVMul.Enable();
 
     //HookCameraDistance();
 

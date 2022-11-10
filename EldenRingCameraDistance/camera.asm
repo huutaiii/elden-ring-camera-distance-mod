@@ -4,6 +4,8 @@
 	extern CameraDistanceMul : dword
 	extern CameraDistanceAdd : dword
 
+	extern FoVMul : dword
+
 .code
 
 	CameraDistance proc
@@ -24,5 +26,10 @@
 
 		ret
 	CameraDistanceAlt endp
+
+	ModifyFoV proc
+		mulss xmm0, [FoVMul]
+		ret
+	ModifyFoV endp
 
 end

@@ -135,7 +135,7 @@ namespace ModUtils
 			muModuleName = GetModuleName(true);
 		}
 		Log("Raised error: %s", error.c_str());
-		MessageBox(NULL, (LPCWSTR)error.c_str(), (LPCWSTR)muModuleName.c_str(), MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+		MessageBoxA(NULL, (LPCSTR)error.c_str(), (LPCSTR)muModuleName.c_str(), MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
 	}
 
 	// Gets the base address of the game's memory.
@@ -195,7 +195,7 @@ namespace ModUtils
 		{
 			std::stringstream stream;
 			std::string byte = "";
-			if (bytes == MASKED)
+			if (bytes > 0xff)
 			{
 				byte = "?";
 			}
@@ -248,17 +248,13 @@ namespace ModUtils
 				{
 					for (size_t i = 0; i < pattern.size(); i++)
 					{
-						if (pattern[i] == MASKED)
+						bool bByteMatches = pattern[i] > 0xff || *((uint8_t*)currentAddress) == (uint8_t)pattern[i];
+						if (!bByteMatches)
 						{
-							currentAddress++;
-							continue;
-						}
-						else if (*(unsigned char*)currentAddress != (unsigned char)pattern[i])
-						{
-							currentAddress++;
+							++currentAddress;
 							break;
 						}
-						else if (i == pattern.size() - 1)
+						if (i == pattern.size() - 1)
 						{
 							uintptr_t signature = currentAddress - pattern.size() + 1;
 							Log("Found signature at %p", signature);
