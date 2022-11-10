@@ -16,7 +16,35 @@ if (Test-Path "$SolutionDir\install_dir.txt")
     $TargetPath = "$TargetDir\$TargetName.dll"
     # echo src=$SourcePath, target=$TargetPath
     Write-Output "Info: Installing file $SourcePath to $TargetPath"
-    Copy-Item -Path "$SourcePath" -Destination "$TargetPath" # overwrites by default unless read-only
+    $loop = $true
+    $try_count = 0
+    while ($loop)
+    {
+        try
+        {
+            Copy-Item -Path "$SourcePath" -Destination "$TargetPath" # overwrites by default unless read-only
+            $loop = $false
+        }
+        catch [System.IO.IOException]
+        {
+            if (($try_count % 10) -eq 0)
+            {
+                Write-Output "$TargetPath locked, retrying..."
+            }
+            $try_count = $try_count + 1
+
+            if ($try_count -gt 30)
+            {
+                exit(1)
+            }
+
+            Start-Sleep -Seconds 1
+        }
+    }
+    if ($try_count -gt 0)
+    {
+        Write-Output "Done moving file to $TargetPath"
+    }
 
     $ConfigPath = "$TargetDir\$TargetName\config.ini"
     if ($DeleteConfig)

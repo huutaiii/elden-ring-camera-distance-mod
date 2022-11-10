@@ -18,4 +18,11 @@
 
 	CameraDistance endp
 
+	CameraDistanceAlt proc
+		mulss xmm7, [CameraDistanceMul]
+		addss xmm7, [CameraDistanceAdd]
+
+		ret
+	CameraDistanceAlt endp
+
 end
