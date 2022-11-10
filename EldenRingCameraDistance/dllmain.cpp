@@ -12,7 +12,6 @@
 constexpr unsigned int JMP_SIZE = 14;
 
 HMODULE g_hModule;
-INIReader config;
 
 extern "C"
 {
@@ -93,11 +92,18 @@ void LoadConfig()
         float offset = reader.GetFloat("camera_distance", "flat_offset", 0.f);
         ModUtils::Log("using offset = %f", offset);
         CameraDistanceAdd = _mm_set_ss(offset);
-    }
 
-    config = reader;
+        float follow_speed_multiplier = reader.GetFloat("camera_interpolation", "follow_speed_multiplier", 1.f);
+        float speed_mul_z = reader.GetFloat("camera_interpolation", "follow_speed_multiplier_z", 0.f);
+        ModUtils::Log("using follow_speed_multiplier = %f", follow_speed_multiplier);
+        ModUtils::Log("using follow_speed_multiplier_z = %f", speed_mul_z);
+        InterpSpeedMul = _mm_set_ss(follow_speed_multiplier);
+        vInterpSpeedMul = (speed_mul_z > 0.f) ? _mm_setr_ps(follow_speed_multiplier, speed_mul_z, follow_speed_multiplier, 0.f)
+            : _mm_setr_ps(follow_speed_multiplier, follow_speed_multiplier, follow_speed_multiplier, 0.f);
+    }
 }
 
+#if 0
 bool HookLoadState()
 {
     {
@@ -130,13 +136,6 @@ bool HookLoadState()
 
 bool HookPivotInterp()
 {
-    float follow_speed_multiplier = config.GetFloat("camera_interpolation", "follow_speed_multiplier", 1.f);
-    float speed_mul_z = config.GetFloat("camera_interpolation", "follow_speed_multiplier_z", 0.f);
-    ModUtils::Log("using follow_speed_multiplier = %f", follow_speed_multiplier);
-    ModUtils::Log("using follow_speed_multiplier_z = %f", speed_mul_z);
-    InterpSpeedMul = _mm_set_ss(follow_speed_multiplier);
-    vInterpSpeedMul = (speed_mul_z > 0.f) ? _mm_setr_ps(follow_speed_multiplier, speed_mul_z, follow_speed_multiplier, 0.f)
-        : _mm_setr_ps(follow_speed_multiplier, follow_speed_multiplier, follow_speed_multiplier, 0.f);
 
     InterpReturn = 0;
     if (!USE_CAM_INTERP_ALT)
@@ -191,15 +190,16 @@ bool HookCameraDistance()
 
     return ReturnAddress != 0;
 }
+#endif
 
 // See VirtualMAlloc::Get, VirtualMAlloc::Alloc
-class VirtualMAlloc {
+class MVirtualAlloc {
     DWORD processId = GetCurrentProcessId();
     DWORD_PTR baseAddress = ModUtils::GetProcessBaseAddress(GetCurrentProcessId());
 
 private:
     SYSTEM_INFO sys;
-    VirtualMAlloc()
+    MVirtualAlloc()
     {
         GetSystemInfo(&sys);
         ModUtils::Log("Process base address: %p", baseAddress);
@@ -209,9 +209,9 @@ private:
 
 public:
     // Get instance
-    static VirtualMAlloc& Get()
+    static MVirtualAlloc& Get()
     {
-        static VirtualMAlloc instance;
+        static MVirtualAlloc instance;
         return instance;
     }
 
@@ -269,8 +269,6 @@ public:
             ModUtils::Log("Allocating page at: %p", lpScan);
 
             // Preallocate a region equals to system page size (typically 4KiB)
-            // do I really need to free this later?
-            ///idk i'm tired
             lpCurrent = VirtualAlloc(lpScan, sys.dwPageSize, flAllocType, flProtec);
 
             bytesAllocated = static_cast<DWORD>(dwSize);
@@ -279,21 +277,22 @@ public:
 
         return (LPBYTE)lpCurrent + bytesAllocated - dwSize;
     }
+
+    // there's no deallocation 'cause we don't need it, for now
 };
 
 // Creates or removes a hook using a relative jump
 // First jump to an intermediate address at which we then do an absolute jump to the custom code
 // This way we don't have to determine the size of the custom asm
 // We also copy the stolen bytes over to the intermediate location so the custom code can omit the original code
-// can't hook where the rsp is used tho
-class HookRelativeIntermediate
+class UHookRelativeIntermediate
 {
 public:
     static const uint8_t op = 0xE8;
     static const unsigned char opSize = 5;
 
     // writes an absolute jump to destination at specified address (14 bytes)
-    class HookAbsoluteNoCopy
+    class UHookAbsoluteNoCopy
     {
         static const uint16_t op = 0x25ff;
 
@@ -310,7 +309,7 @@ public:
             }
         }
 
-        HookAbsoluteNoCopy(LPVOID lpHook = nullptr, LPVOID lpDestination = nullptr, size_t offset = 0) : lpDest(lpDestination)
+        UHookAbsoluteNoCopy(LPVOID lpHook = nullptr, LPVOID lpDestination = nullptr, size_t offset = 0) : lpDest(lpDestination)
         {
             this->lpHook = static_cast<LPBYTE>(lpHook) + offset;
         }
@@ -322,46 +321,48 @@ private:
     LPVOID lpDestination;
     size_t numBytes;
 
+    bool bCanHook = false;
     bool bEnabled = false;
-    HookAbsoluteNoCopy jmpAbs;
+    UHookAbsoluteNoCopy jmpAbs;
 
     // Initialize the intermediate code that we can decide to jump to later
-    void Init() // feels brit'ish
+    void Init()
     {
-        lpIntermediate = VirtualMAlloc::Get().Alloc(numBytes + 14 + 4 + 4); // one 14B jump, two 3B adds
+        lpIntermediate = MVirtualAlloc::Get().Alloc(numBytes + 14 + 4 + 4); // one 14B jump, two 3B adds
 
         // move stack pointer up so stolen instructions can access the stack
-        ModUtils::MemCopy(uintptr_t(lpIntermediate), uintptr_t(espUp.data()), 4);
+        ModUtils::MemCopy(uintptr_t(lpIntermediate), uintptr_t(rspUp.data()), 4);
 
         // copy to be stolen bytes to the imtermediate location
         ModUtils::MemCopy(reinterpret_cast<uint64_t>(lpIntermediate) + 4, reinterpret_cast<uint64_t>(lpHook), numBytes);
 
         // move stack pointer down so the custom code can return
-        ModUtils::MemCopy(uintptr_t(lpIntermediate) + 4 + numBytes, uintptr_t(espDown.data()), 4);
+        ModUtils::MemCopy(uintptr_t(lpIntermediate) + 4 + numBytes, uintptr_t(rspDown.data()), 4);
 
-        // create jump from intermediate location after the original code to custom code
-        jmpAbs = HookAbsoluteNoCopy(lpIntermediate, lpDestination, 4 + numBytes + 4);
+        // create jump from intermediate code to custom code
+        jmpAbs = UHookAbsoluteNoCopy(lpIntermediate, lpDestination, 4 + numBytes + 4);
         jmpAbs.Enable();
 
         ModUtils::Log("Generated hook from %p to %p at %p", lpHook, lpDestination, lpIntermediate);
     }
 
 public:
-    HookRelativeIntermediate(HookRelativeIntermediate&) = delete;
-    HookRelativeIntermediate(LPVOID lpHook, LPVOID lpDestination, const size_t numStolenBytes)
-        : numBytes(numStolenBytes), lpHook(lpHook), lpDestination(lpDestination)
+    UHookRelativeIntermediate(UHookRelativeIntermediate&) = delete;
+    UHookRelativeIntermediate(LPVOID lpHook, LPVOID lpDestination, const size_t numStolenBytes)
+        : numBytes(numStolenBytes), bCanHook(true), lpHook(lpHook), lpDestination(lpDestination)
     {
         Init();
     }
-    HookRelativeIntermediate(const std::vector<BYTE>& signature, size_t numStolenBytes, LPVOID destination)
+    UHookRelativeIntermediate(const std::vector<BYTE>& signature, size_t numStolenBytes, LPVOID destination)
         : numBytes(numStolenBytes), lpDestination(destination)
     {
         lpHook = reinterpret_cast<LPVOID>(ModUtils::SigScan(std::vector<uint16_t>(signature.begin(), signature.end())));
+        bCanHook = lpHook != nullptr;
         Init();
     }
 
-    static const std::vector<uint8_t> espUp; // add esp, 8 (3B)
-    static const std::vector<uint8_t> espDown; // add esp -8
+    static const std::vector<uint8_t> rspUp; // add rsp, 8 (4B)
+    static const std::vector<uint8_t> rspDown; // add rsp, -8 (4B)
 
     void Enable()
     {
@@ -380,18 +381,24 @@ public:
     {
         if (!bEnabled) { return; }
         ModUtils::Log("Disabling hook from %p to %p", lpHook, lpDestination);
-        ModUtils::MemCopy(uintptr_t(lpHook), uintptr_t(lpIntermediate), numBytes);
+        ModUtils::MemCopy(uintptr_t(lpHook), uintptr_t(lpIntermediate) + 4, numBytes);
     }
-    ~HookRelativeIntermediate() { Disable(); }
+    ~UHookRelativeIntermediate() { Disable(); }
 };
 
-const std::vector<uint8_t> HookRelativeIntermediate::espDown({ 0x48, 0x83, 0xC4, 0xF8 });
-const std::vector<uint8_t> HookRelativeIntermediate::espUp({ 0x48, 0x83, 0xC4, 0x08 });
+const std::vector<uint8_t> UHookRelativeIntermediate::rspDown({ 0x48, 0x83, 0xC4, 0xF8 });
+const std::vector<uint8_t> UHookRelativeIntermediate::rspUp({ 0x48, 0x83, 0xC4, 0x08 });
 
-HookRelativeIntermediate HOOK_CAMERA_DISTANCE(
+UHookRelativeIntermediate HookCameraDistance(
     std::vector<uint8_t>({ 0x48, 0x8D, 0x4C, 0x24, 0x20, 0x44, 0x0F, 0x28, 0xD8, 0xF3, 0x45, 0x0F, 0x59, 0xDF }),
     5,
     &CameraDistanceAlt
+);
+
+UHookRelativeIntermediate HookPivotInterp(
+    std::vector<uint8_t>({ 0x0F, 0x28, 0xC4, 0x41, 0x0F, 0x5C, 0x21, 0x0F, 0x5C, 0xC6, 0xF3, 0x0F, 0x5E, 0xDD }),
+    7,
+    &CamInterpAlt
 );
 
 DWORD WINAPI MainThread(LPVOID lpParam)
@@ -402,11 +409,13 @@ DWORD WINAPI MainThread(LPVOID lpParam)
     //{
     //    ModUtils::Log("meminfo: %p %p %u %u %u", meminfo.BaseAddress, meminfo.AllocationBase, meminfo.RegionSize, meminfo.Type, meminfo.Protect);
     //}
-    HOOK_CAMERA_DISTANCE.Enable();
-
     LoadConfig();
+    HookCameraDistance.Enable();
+    HookPivotInterp.Enable();
+
     //HookCameraDistance();
 
+#if 0
     if (config.GetBoolean("camera_interpolation", "disable_lag", false))
     {
         ModUtils::Log("Disabling camera lag");
@@ -443,6 +452,7 @@ DWORD WINAPI MainThread(LPVOID lpParam)
             HookPivotInterp();
         }
     }
+#endif
 
     ModUtils::CloseLog();
     return 0;

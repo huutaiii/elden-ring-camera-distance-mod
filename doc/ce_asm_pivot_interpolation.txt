@@ -135,7 +135,6 @@ eldenring.exe+D8A94A - 48 8B C2              - mov rax,rdx
 eldenring.exe+D8A94D - 0F29 02               - movaps [rdx],xmm0
 eldenring.exe+D8A950 - 48 83 C4 48           - add rsp,48
 eldenring.exe+D8A954 - C3                    - ret 
-										; hook starts here (16 bytes)
 eldenring.exe+D8A955 - F3 41 0F10 10         - movss xmm2,[r8]						; goes between ~0.1 and ~0.3?
 eldenring.exe+D8A95A - 0F57 C9               - xorps xmm1,xmm1
 eldenring.exe+D8A95D - 48 8B 44 24 70        - mov rax,[rsp+70]
@@ -178,8 +177,8 @@ eldenring.exe+D8A9F0 - 0F28 20               - movaps xmm4,[rax]
 eldenring.exe+D8A9F3 - 48 8B 44 24 78        - mov rax,[rsp+78]
 eldenring.exe+D8A9F8 - 0FC6 C0 00            - shufps xmm0,xmm0,00
 eldenring.exe+D8A9FC - 44 0F5E C8            - divps xmm9,xmm0
-eldenring.exe+D8AA00 - 44 0F28 00            - movaps xmm8,[rax] ; xmm8 controls per-component interpolation speed (2nd comp being height), it changes every frame tho
-eldenring.exe+D8AA04 - 0F28 C4               - movaps xmm0,xmm4
+eldenring.exe+D8AA00 - 44 0F28 00            - movaps xmm8,[rax]	; xmm8 controls per-component interpolation speed (2nd comp being height), it changes every frame tho
+eldenring.exe+D8AA04 - 0F28 C4               - movaps xmm0,xmm4		; insert hook here
 eldenring.exe+D8AA07 - 41 0F5C 21            - subps xmm4,[r9]
 eldenring.exe+D8AA0B - 0F5C C6               - subps xmm0,xmm6
 eldenring.exe+D8AA0E - F3 0F5E DD            - divss xmm3,xmm5

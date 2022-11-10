@@ -24,13 +24,10 @@
 	CameraInterp endp
 
 	CamInterpAlt proc
-		repeat 14
-			nop
-		endm
 
 		mulps xmm8, [vInterpSpeedMul]
 
-		jmp [InterpRetAlt]
+		ret
 	CamInterpAlt endp
 
 	LoadingEnd proc

@@ -5,7 +5,8 @@ s = "".join(sys.argv[1:]).replace(" ","").strip()
 if s == "":
     print("reading from stdin until EOF")
     s = sys.stdin.read()
-    s = s.replace(" ","").replace("\t","").strip()
+    for c in "\t\n ":
+        s = s.replace(c,"").strip()
 
 size = int(len(s) / 2)
 print("Array size: " + str(size))
