@@ -28,7 +28,7 @@
 	CameraDistanceAlt endp
 
 	ModifyFoV proc
-		mulss xmm0, [FoVMul]
+		mulss xmm12, [FoVMul]
 		ret
 	ModifyFoV endp
 

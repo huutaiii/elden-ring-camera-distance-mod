@@ -23,6 +23,10 @@ namespace ModUtils
 	static constexpr int MASKED = 0xffff;
 	static constexpr unsigned char HK_NONE = 0x07;
 
+	static struct {
+		bool bScanAllModules = false;
+	} settings;
+
 	class Timer
 	{
 	public:
@@ -179,7 +183,12 @@ namespace ModUtils
 	}
 
 	// Scans the whole memory of the main process module for the given signature.
-	inline uintptr_t SigScan(std::vector<uint16_t> pattern, bool logProcess = false)
+	// pattern[i]:
+	//      .low = value to compare
+	//      .high = reverse bit mask (0: compare, 1: ignore)
+	// e.g. pattern[2] = 0xf025 : compare current byte's high 4 bits with 0x25's high 4 bits
+	//      pattern[i] = 0xff00..0xffff : skip that byte and check the next ones
+	inline uintptr_t SigScan(std::vector<uint16_t> pattern, bool logProcess = false, std::string msg = {})
 	{
 		DWORD processId = GetCurrentProcessId();
 		uintptr_t regionStart = GetProcessBaseAddress(processId);
@@ -240,15 +249,21 @@ namespace ModUtils
 				protection == PAGE_EXECUTE_WRITECOPY)
 				&& state == MEM_COMMIT;
 
-			if (readableMemory)
+			bool bShouldScan = settings.bScanAllModules || GetProcessBaseAddress(processId) == (DWORD_PTR)memoryInfo.AllocationBase;
+
+			CHAR moduleName[100];
+			GetModuleFileNameA((HMODULE)memoryInfo.AllocationBase, moduleName, 100);
+
+			if (readableMemory && bShouldScan)
 			{
-				Log("Checking region: %p", regionStart);
+				Log("Checking region: %p %s", regionStart, moduleName);
 				currentAddress = regionStart;
 				while (currentAddress < regionEnd - pattern.size())
 				{
 					for (size_t i = 0; i < pattern.size(); i++)
 					{
-						bool bByteMatches = pattern[i] > 0xff || *((uint8_t*)currentAddress) == (uint8_t)pattern[i];
+						uint8_t bitmask = ~uint8_t(pattern[i] >> 010);
+						bool bByteMatches = ((*(uint8_t*)currentAddress) & bitmask) == (uint8_t(pattern[i] & 0xff) & bitmask);
 						if (!bByteMatches)
 						{
 							++currentAddress;
@@ -266,7 +281,7 @@ namespace ModUtils
 			}
 			else
 			{
-				Log("Skipped region: %p", regionStart);
+				Log("Skipped region: %p %s", regionStart, moduleName);
 			}
 
 			numRegionsChecked++;
@@ -274,7 +289,7 @@ namespace ModUtils
 		}
 
 		Log("Stopped at: %p, num regions checked: %i", currentAddress, numRegionsChecked);
-		RaiseError("Could not find signature!");
+		RaiseError("Could not find signature! " + msg);
 		return 0;
 	}
 

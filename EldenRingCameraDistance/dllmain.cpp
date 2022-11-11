@@ -323,10 +323,13 @@ public:
     };
 
 private:
+    std::string msg;
+
     LPVOID lpHook;
     LPVOID lpIntermediate;
     LPVOID lpDestination;
     size_t numBytes;
+    const MVirtualAlloc& allocator;
 
     bool bCanHook = false;
     bool bEnabled = false;
@@ -335,46 +338,50 @@ private:
     // Initialize the intermediate code that we can decide to jump to later
     void Init()
     {
-        lpIntermediate = MVirtualAlloc::Get().Alloc(numBytes + 14 + 4 + 4); // one 14B jump, two 3B adds
+        lpIntermediate = MVirtualAlloc::Get().Alloc(numBytes + 14 + rspUp.size() + rspDown.size()); // one 14B jump, two 3B adds
 
         // move stack pointer up so stolen instructions can access the stack
-        ModUtils::MemCopy(uintptr_t(lpIntermediate), uintptr_t(rspUp.data()), 4);
+        ModUtils::MemCopy(uintptr_t(lpIntermediate), uintptr_t(rspUp.data()), rspUp.size());
 
         // copy to be stolen bytes to the imtermediate location
-        ModUtils::MemCopy(reinterpret_cast<uint64_t>(lpIntermediate) + 4, reinterpret_cast<uint64_t>(lpHook), numBytes);
+        ModUtils::MemCopy(reinterpret_cast<uint64_t>(lpIntermediate) + rspUp.size(), reinterpret_cast<uint64_t>(lpHook), numBytes);
 
         // move stack pointer down so the custom code can return
-        ModUtils::MemCopy(uintptr_t(lpIntermediate) + 4 + numBytes, uintptr_t(rspDown.data()), 4);
+        ModUtils::MemCopy(uintptr_t(lpIntermediate) + rspUp.size() + numBytes, uintptr_t(rspDown.data()), rspDown.size());
 
         // create jump from intermediate code to custom code
-        jmpAbs = UHookAbsoluteNoCopy(lpIntermediate, lpDestination, 4 + numBytes + 4);
+        jmpAbs = UHookAbsoluteNoCopy(lpIntermediate, lpDestination, rspUp.size() + numBytes + rspDown.size());
         jmpAbs.Enable();
 
-        ModUtils::Log("Generated hook from %p to %p at %p", lpHook, lpDestination, lpIntermediate);
+        if (msg.empty())
+        {
+            msg = std::string("Unknown Hook");
+        }
+        ModUtils::Log("Generated hook '%s' from %p to %p at %p", msg.c_str(), lpHook, lpDestination, lpIntermediate);
     }
 
 public:
     UHookRelativeIntermediate(UHookRelativeIntermediate&) = delete;
     UHookRelativeIntermediate(LPVOID lpHook, LPVOID lpDestination, const size_t numStolenBytes)
-        : numBytes(numStolenBytes), bCanHook(true), lpHook(lpHook), lpDestination(lpDestination)
+        : numBytes(numStolenBytes), bCanHook(true), lpHook(lpHook), lpDestination(lpDestination), msg({}), allocator(MVirtualAlloc::Get())
     {
         Init();
     }
-    UHookRelativeIntermediate(std::vector<uint16_t> signature, size_t numStolenBytes, LPVOID destination, size_t offset = 0)
-        : numBytes(numStolenBytes), lpDestination(destination)
+    UHookRelativeIntermediate(std::vector<uint16_t> signature, size_t numStolenBytes, LPVOID destination, int offset = 0, std::string msg = {})
+        : numBytes(numStolenBytes), lpDestination(destination), msg(msg), allocator(MVirtualAlloc::Get())
     {
-        lpHook = reinterpret_cast<LPVOID>(ModUtils::SigScan(signature) + offset);
+        lpHook = reinterpret_cast<LPVOID>(ModUtils::SigScan(signature, false, msg) + offset);
         bCanHook = lpHook != nullptr;
         Init();
     }
 
-    static const std::vector<uint8_t> rspUp; // add rsp, 8 (4B)
-    static const std::vector<uint8_t> rspDown; // add rsp, -8 (4B)
+    static const std::vector<uint8_t> rspUp; // lea rsp,[rsp+8] (5B)
+    static const std::vector<uint8_t> rspDown; // lea rsp,[rsp-8] (5B)
 
     void Enable()
     {
         if (!bCanHook || bEnabled) { return; }
-        ModUtils::Log("Enabling hook from %p to %p", lpHook, lpDestination);
+        ModUtils::Log("Enabling hook '%s' from %p to %p", msg.c_str(), lpHook, lpDestination);
 
         // pad the jump in case numBytes > jump instruction size
         ModUtils::MemSet(reinterpret_cast<uintptr_t>(lpHook), 0x90, numBytes);
@@ -387,42 +394,69 @@ public:
     void Disable()
     {
         if (!bEnabled) { return; }
-        ModUtils::Log("Disabling hook from %p to %p", lpHook, lpDestination);
-        ModUtils::MemCopy(uintptr_t(lpHook), uintptr_t(lpIntermediate) + 4, numBytes);
+        ModUtils::Log("Disabling hook '%s' from %p to %p", msg.c_str(), lpHook, lpDestination);
+        ModUtils::MemCopy(uintptr_t(lpHook), uintptr_t(lpIntermediate) + rspUp.size(), numBytes);
     }
     ~UHookRelativeIntermediate() { Disable(); }
 };
 
-const std::vector<uint8_t> UHookRelativeIntermediate::rspDown({ 0x48, 0x83, 0xC4, 0xF8 });
-const std::vector<uint8_t> UHookRelativeIntermediate::rspUp({ 0x48, 0x83, 0xC4, 0x08 });
+const std::vector<uint8_t> UHookRelativeIntermediate::rspUp({ 0x48, 0x8D, 0x64, 0x24, 0x08 });
+const std::vector<uint8_t> UHookRelativeIntermediate::rspDown({ 0x48, 0x8D, 0x64, 0x24, 0xf8 });
 
 static decltype(ModUtils::MASKED) MASK = ModUtils::MASKED;
-//using ModUtils::MASKED;
-//#define MASK MASKED
 
+//    |
+//    v
+//  48 8D 4C 24 20        - lea rcx,[rsp+20]
+//  44 0F28 D8            - movaps xmm11,xmm0
+//  F3 45 0F59 DF         - mulss xmm11,xmm15
+//  E8 18BF9000           - call eldenring.exe+CC0870
+//  48 8D 4C 24 20        - lea rcx,[rsp+20]
+std::vector<uint16_t> PATTERN_DISTANCE = { 0x8D, MASK, MASK, MASK, MASK, 0x0F, 0x28, MASK, MASK, MASK, 0x0F, 0x59, MASK, 0xE8, MASK, MASK, MASK, MASK, MASK, 0x8D, MASK, 0x24, MASK };
 UHookRelativeIntermediate HookCameraDistance(
-    std::vector<uint16_t>({ 0x48, 0x8D, 0x4C, 0x24, 0x20, 0x44, 0x0F, 0x28, 0xD8, 0xF3, 0x45, 0x0F, 0x59, 0xDF }),
+    PATTERN_DISTANCE/*std::vector<uint16_t>({ 0x48, 0x8D, 0x4C, 0x24, 0x20, 0x44, 0x0F, 0x28, 0xD8, 0xF3, 0x45, 0x0F, 0x59, 0xDF })*/,
     5,
-    &CameraDistanceAlt
+    &CameraDistanceAlt,
+    -1,
+    "HookCameraDistance"
 );
 
+//    |
+//    v
+//  44 0F28 00            - movaps xmm8,[rax]
+//  0F28 C4               - movaps xmm0,xmm4
+//  41 0F5C 21            - subps xmm4,[r9]
+//  0F5C C6               - subps xmm0,xmm6
+//  F3 0F5E DD            - divss xmm3,xmm5
+//  44 0F59 C8            - mulps xmm9,xmm0
+//  0F28 C2               - movaps xmm0,xmm2
+//  0F28 CB               - movaps xmm1,xmm3
+std::vector<uint16_t> PATTERN_PIVOT = { 0x0F, 0x28, MASK, 0x0F, 0x28, MASK, MASK, 0x0F, 0x5C, MASK, 0x0F, 0x5C, MASK, MASK, 0x0F, 0x5E, MASK, MASK, 0x0F, 0x59, MASK, 0x0F, 0x28, MASK, 0x0F, 0x28, MASK };
 UHookRelativeIntermediate HookPivotInterp(
-    std::vector<uint16_t>({ 0x0F, 0x28, 0xC4, 0x41, 0x0F, 0x5C, 0x21, 0x0F, 0x5C, 0xC6, 0xF3, 0x0F, 0x5E, 0xDD }),
+    PATTERN_PIVOT/*std::vector<uint16_t>({ 0x0F, 0x28, 0xC4, 0x41, 0x0F, 0x5C, 0x21, 0x0F, 0x5C, 0xC6, 0xF3, 0x0F, 0x5E, 0xDD })*/,
     7,
-    &CamInterpAlt
+    &CamInterpAlt,
+    -1,
+    "HookPivotInterp"
 );
 
 // Thanks to uberhalit (uberhalit/EldenRingFpsUnlockAndMore) for the disassembly
-auto FOV_PATTERN = std::vector<uint16_t>({ 0x80, 0xBB, MASK, MASK, MASK, MASK, 0x00, MASK, 0x0F, 0x28, MASK, 0xF3, MASK, 0x0F, 0x10, MASK, MASK, MASK, MASK, MASK, MASK, 0x0F, 0x57, MASK, 0xF3, MASK, 0x0F, 0x59, MASK });
+//  80 BB 88040000 00       - cmp byte ptr [rbx+00000488],00
+//  44 0F28 E0              - movaps xmm12, xmm0
+//  F3 44 0F10 05 E22CE202  - movss xmm8, [eldenring.exe.rdata + 8D8678]
+//  45 0F57 D2              - xorps xmm10, xmm10
+//  F3 45 0F59 E7           - mulss xmm12, xmm15
+std::vector<uint16_t> PATTERN_FOV = { 0x80, 0xBB, MASK, MASK, MASK, MASK, 0x00, MASK, 0x0F, 0x28, MASK, 0xF3, MASK, 0x0F, 0x10, MASK, MASK, MASK, MASK, MASK, MASK, 0x0F, 0x57, MASK, 0xF3, MASK, 0x0F, 0x59, MASK };
 UHookRelativeIntermediate HookFoVMul(
-    FOV_PATTERN,
-    7,
-    &ModifyFoV
+    PATTERN_FOV,
+    11,
+    &ModifyFoV,
+    0,
+    "HookFoVMul"
 );
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
-
     //MEMORY_BASIC_INFORMATION meminfo;
     //if (VirtualQuery((LPBYTE)baseAddress - 1, &meminfo, sizeof(meminfo)))
     //{
