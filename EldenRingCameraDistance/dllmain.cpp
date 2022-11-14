@@ -1,15 +1,29 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "framework.h"
-#include "../include/ModUtils.h"
-#include "../include/INIReader.h"
 #include "resource.h"
 
+#pragma warning(push, 0)
 #include <vector>
 #include <xmmintrin.h>
 #include <iostream>
 #include <fstream>
+#include <functional>
+#include <memory>
+#include <queue>
+
+#include <ModUtils.h>
+#include <INIReader.h>
+#include <glm/matrix.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtx/string_cast.hpp>
+#pragma warning(pop)
 
 constexpr unsigned int JMP_SIZE = 14;
+constexpr bool AUTOENABLE = true;
+
+#define USE_TEST_PATTERNS 1
+unsigned int PIVOT_INTERP_DELAY = 0;
+float PIVOT_INTERP_SPEED = 5.f;
 
 HMODULE g_hModule;
 
@@ -35,9 +49,110 @@ extern "C"
     void LoadingBegin();
     uintptr_t LoadingEndReturn;
     uintptr_t LoadingBeginReturn;
+
+    void PassPivotRotation();
+
+    float* FrameTime;
 }
 
-constexpr bool USE_CAM_INTERP_ALT = true;
+glm::vec4 vec_from__m128(__m128 m)
+{
+    float v[4];
+    _mm_storer_ps(v, m); // MSVC specific, keeps components in reverse order
+    return glm::vec4(v[3], v[2], v[1], v[0]);
+}
+
+float RelativeOffsetAlpha(glm::vec3 offset, float max_distance)
+{
+    return glm::length(offset) / max_distance;
+}
+
+template<typename T>
+inline T min(T a, T b) { return a < b ? a : b; }
+
+glm::vec3 InterpV3(glm::vec3 current, glm::vec3 target, float speed = 1, float deltaTime = 1.f/60.f, float minDistance = 0.001f)
+{
+    if (speed <= 0.f)
+    {
+        return target;
+    }
+
+    glm::vec3 delta = (target - current);
+    if (glm::length(delta) <= minDistance)
+    {
+        return target;
+    }
+
+    //glm::vec3 vel = delta * deltaTime * speed;
+    //vel = glm::normalize(vel) * min(glm::length(vel), glm::length(delta));
+    glm::vec3 vel = delta * min(deltaTime * speed, 1.f);
+    return current + vel;
+}
+
+glm::vec3 RelativeOffset;
+std::queue<__m128> RelativeOffsetBuffer;
+extern "C" __m128 OffsetInterp = _mm_setzero_ps();
+extern "C" __m128 CollisionOffset = _mm_setzero_ps();
+
+uintptr_t AutoRotationAddress;
+uintptr_t AutoRotationBytes;
+
+extern "C"
+{
+    float PivotYaw = 0.f;
+    __m128 pvResolvedOffset = _mm_setzero_ps();
+    float fCamMaxDistance = 0.f;
+    
+    void SetPivotYaw();
+    void SetCameraCoords();
+    void SetCameraMaxDistance();
+    void PivotOffset();
+    void CameraCollisionOffset();
+
+    // coord system is Z-forward Y-up
+    __m128 CalcPivotOffset() // compiled code uses xmm0-5 (used to, maybe)
+    {
+        //TODO: reduce offset based on collision
+        glm::mat4x4 rotation = glm::rotate(PivotYaw, glm::vec3(0.f, 1.f, 0.f));
+        float a = RelativeOffsetAlpha(vec_from__m128(pvResolvedOffset), fCamMaxDistance);
+        glm::vec4 vOffset = rotation * glm::vec4(RelativeOffset, 0.f) * a;
+
+        glm::vec3 vOffsetInterp = InterpV3(vec_from__m128(OffsetInterp), vOffset, PIVOT_INTERP_SPEED);
+        __m128 offset = _mm_setr_ps(vOffsetInterp.x, vOffsetInterp.y, vOffsetInterp.z, 0.f);
+
+        float distance = glm::length(glm::vec3(vec_from__m128(OffsetInterp)) - vOffsetInterp);
+        if (distance > 0)
+        {
+            ModUtils::MemSet(AutoRotationAddress, 0x90, 7);
+        }
+        else
+        {
+            ModUtils::MemCopy(AutoRotationAddress, AutoRotationBytes, 7);
+        }
+
+        if (PIVOT_INTERP_DELAY > 0)
+        {
+            std::queue<__m128>& buffer = RelativeOffsetBuffer;
+            buffer.push(offset);
+            if (buffer.size() >= PIVOT_INTERP_DELAY)
+            {
+                while (buffer.size() > PIVOT_INTERP_DELAY)
+                {
+                    buffer.pop();
+                }
+                CollisionOffset = buffer.front();
+                buffer.pop();
+            }
+        }
+        else
+        {
+            CollisionOffset = offset;
+        }
+        OffsetInterp = offset;
+
+        return OffsetInterp;
+    }
+}
 
 std::string GetDefaultConfig()
 {
@@ -107,6 +222,11 @@ void LoadConfig()
         InterpSpeedMul = _mm_set_ss(follow_speed_multiplier);
         vInterpSpeedMul = (speed_mul_z > 0.f) ? _mm_setr_ps(follow_speed_multiplier, speed_mul_z, follow_speed_multiplier, 0.f)
             : _mm_setr_ps(follow_speed_multiplier, follow_speed_multiplier, follow_speed_multiplier, 0.f);
+
+        std::vector<float> relative_offset_val = reader.GetVector<3, float>("camera_offset", "offset", std::vector<float>({}));
+        glm::vec3 relative_offset(relative_offset_val[0], relative_offset_val[1], relative_offset_val[2]);
+        ModUtils::Log("using relative_offset = %s", glm::to_string(relative_offset).c_str());
+        RelativeOffset = relative_offset;
     }
 }
 
@@ -288,7 +408,7 @@ public:
     // there's no deallocation 'cause we don't need it, for now
 };
 
-// Creates or removes a hook using a relative jump
+// Creates or removes a hook using a relative jump (5 bytes)
 // First jump to an intermediate address at which we then do an absolute jump to the custom code
 // This way we don't have to determine the size of the custom asm
 // We also copy the stolen bytes over to the intermediate location so the custom code can omit the original code
@@ -323,22 +443,21 @@ public:
     };
 
 private:
-    std::string msg;
 
-    LPVOID lpHook;
-    LPVOID lpIntermediate;
-    LPVOID lpDestination;
-    size_t numBytes;
-    const MVirtualAlloc& allocator;
+    LPVOID lpHook = nullptr;
+    LPVOID lpIntermediate = nullptr;
+    LPVOID lpDestination = nullptr;
+    size_t numBytes = 5;
+    MVirtualAlloc& allocator = MVirtualAlloc::Get();
 
     bool bCanHook = false;
     bool bEnabled = false;
-    UHookAbsoluteNoCopy jmpAbs;
+    std::unique_ptr<UHookAbsoluteNoCopy> upJmpAbs;
 
     // Initialize the intermediate code that we can decide to jump to later
     void Init()
     {
-        lpIntermediate = MVirtualAlloc::Get().Alloc(numBytes + 14 + rspUp.size() + rspDown.size()); // one 14B jump, two 3B adds
+        lpIntermediate = allocator.Alloc(numBytes + 14 + rspUp.size() + rspDown.size()); // one 14B jump, two 3B adds
 
         // move stack pointer up so stolen instructions can access the stack
         ModUtils::MemCopy(uintptr_t(lpIntermediate), uintptr_t(rspUp.data()), rspUp.size());
@@ -350,36 +469,52 @@ private:
         ModUtils::MemCopy(uintptr_t(lpIntermediate) + rspUp.size() + numBytes, uintptr_t(rspDown.data()), rspDown.size());
 
         // create jump from intermediate code to custom code
-        jmpAbs = UHookAbsoluteNoCopy(lpIntermediate, lpDestination, rspUp.size() + numBytes + rspDown.size());
-        jmpAbs.Enable();
+        upJmpAbs = std::make_unique<UHookAbsoluteNoCopy>(lpIntermediate, lpDestination, rspUp.size() + numBytes + rspDown.size());
+        upJmpAbs->Enable();
 
-        if (msg.empty())
-        {
-            msg = std::string("Unknown Hook");
-        }
         ModUtils::Log("Generated hook '%s' from %p to %p at %p", msg.c_str(), lpHook, lpDestination, lpIntermediate);
     }
 
 public:
+    const std::string msg;
+
     UHookRelativeIntermediate(UHookRelativeIntermediate&) = delete;
-    UHookRelativeIntermediate(LPVOID lpHook, LPVOID lpDestination, const size_t numStolenBytes)
-        : numBytes(numStolenBytes), bCanHook(true), lpHook(lpHook), lpDestination(lpDestination), msg({}), allocator(MVirtualAlloc::Get())
+    //UHookRelativeIntermediate(LPVOID lpHook, LPVOID lpDestination, const size_t numStolenBytes)
+    //    : numBytes(numStolenBytes), bCanHook(true), lpHook(lpHook), lpDestination(lpDestination), msg({}), allocator(MVirtualAlloc::Get())
+    //{
+    //    Init();
+    //}
+    UHookRelativeIntermediate(
+        std::vector<uint16_t> signature,
+        size_t numStolenBytes,
+        LPVOID destination,
+        int offset = 0,
+        std::string msg = "Unknown Hook",
+        std::function<void()> enable = []() {},
+        std::function<void()> disable = []() {}
+    )
+        : numBytes(numStolenBytes), lpDestination(destination), msg(msg), fnEnable(enable), fnDisable(disable)
     {
-        Init();
-    }
-    UHookRelativeIntermediate(std::vector<uint16_t> signature, size_t numStolenBytes, LPVOID destination, int offset = 0, std::string msg = {})
-        : numBytes(numStolenBytes), lpDestination(destination), msg(msg), allocator(MVirtualAlloc::Get())
-    {
-        lpHook = reinterpret_cast<LPVOID>(ModUtils::SigScan(signature, false, msg) + offset);
+        lpHook = reinterpret_cast<LPVOID>(ModUtils::SigScan(signature, false, msg, true) + offset);
         bCanHook = lpHook != nullptr;
-        Init();
+        //Init();
     }
+
+    const bool HasFoundSignature() const { return bCanHook; }
 
     static const std::vector<uint8_t> rspUp; // lea rsp,[rsp+8] (5B)
     static const std::vector<uint8_t> rspDown; // lea rsp,[rsp-8] (5B)
 
+    std::function<void()> fnEnable;
+    std::function<void()> fnDisable;
+
     void Enable()
     {
+        if (!lpIntermediate)
+        {
+            Init();
+        }
+
         if (!bCanHook || bEnabled) { return; }
         ModUtils::Log("Enabling hook '%s' from %p to %p", msg.c_str(), lpHook, lpDestination);
 
@@ -390,12 +525,22 @@ public:
         *static_cast<uint8_t*>(lpHook) = op;
         uint32_t relOffset = static_cast<uint32_t>(static_cast<uint8_t*>(lpIntermediate) - static_cast<uint8_t*>(lpHook) - opSize);
         *reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(lpHook) + 1) = relOffset;
+        
+        fnEnable();
+        bEnabled = true;
     }
     void Disable()
     {
         if (!bEnabled) { return; }
         ModUtils::Log("Disabling hook '%s' from %p to %p", msg.c_str(), lpHook, lpDestination);
         ModUtils::MemCopy(uintptr_t(lpHook), uintptr_t(lpIntermediate) + rspUp.size(), numBytes);
+
+        fnDisable();
+        bEnabled = false;
+    }
+    void Toggle()
+    {
+        bEnabled ? Disable() : Enable();
     }
     ~UHookRelativeIntermediate() { Disable(); }
 };
@@ -455,6 +600,97 @@ UHookRelativeIntermediate HookFoVMul(
     "HookFoVMul"
 );
 
+#if USE_TEST_PATTERNS
+
+UHookRelativeIntermediate HookStorePivotRotation(
+    std::vector<uint16_t>({ 0xF3, 0x44, 0x0F, 0x11, 0x45, 0xB7, 0x44, 0x0F, 0x29, 0x45, 0xC7, 0x76, 0x05 }),
+    11,
+    &SetPivotYaw,
+    0,
+    "HookStorePivotRotation"
+);
+
+UHookRelativeIntermediate HookStoreCameraCoords(
+    std::vector<uint16_t>({ 0x0F, 0x28, 0xB4, 0x24, 0xA0, 0x02, 0x00, 0x00, 0x48, 0x81, 0xC4, 0xB0, 0x02, 0x00, 0x00, 0x41, 0x5F, 0x41, 0x5E, 0x41, 0x5D, 0x41, 0x5C, 0x5F, 0x5E, 0x5D, 0xC3 }),
+    8,
+    &SetCameraCoords,
+    0,
+    "HookStoreCameraCoords"
+);
+
+std::vector<uint16_t> PATTERN_CAMERA_MAX_DISTANCE_INTERP({ 0xEB, 0x1C, 0xF3, 0x0F, 0x10, 0x83, 0xB8, 0x01, 0x00, 0x00, 0xF3, 0x0F, 0x5C, 0xF8, 0xF3, 0x0F, 0x59, 0xFE, 0xF3, 0x0F, 0x58, 0xF8, 0xF3, 0x0F, 0x11, 0xBB, 0xB8, 0x01, 0x00, 0x00 });
+UHookRelativeIntermediate HookStoreCameraMaxDistance(
+    PATTERN_CAMERA_MAX_DISTANCE_INTERP,
+    8,
+    &SetCameraMaxDistance,
+    int(PATTERN_CAMERA_MAX_DISTANCE_INTERP.size() - 8),
+    "HookStoreCameraMaxDistance"
+);
+
+uintptr_t HookOffsetInterp;
+LPVOID HookOffsetInterpBytes;
+void HookPivotOffsetEnable()
+{
+    std::vector<uint16_t> pattern({ 0x0F, 0x8A, 0x86, 0x00, 0x00, 0x00, 0x0F, 0x85, 0x80, 0x00, 0x00, 0x00, 0x44, 0x0F, 0x59, 0x83, 0x70, 0x02, 0x00, 0x00, 0x48, 0x8D, 0xBB, 0x58, 0x02, 0x00, 0x00, 0x48, 0x8D, 0xB3, 0x5C, 0x02, 0x00, 0x00 });
+    HookOffsetInterp = ModUtils::SigScan(pattern);
+    if (HookOffsetInterp)
+    {
+        HookOffsetInterpBytes = MVirtualAlloc::Get().Alloc(12);
+        ModUtils::MemCopy(uintptr_t(HookOffsetInterpBytes), HookOffsetInterp, 12);
+        ModUtils::MemSet(HookOffsetInterp, 0x90, 12);
+    }
+
+    AutoRotationAddress = ModUtils::SigScan({ 0x0F, 0x29, 0xA6, 0x50, 0x01, 0x00, 0x00, 0x41, 0x0F, 0x28, 0xCF, 0x48, 0x8B, 0xCE, 0xE8, 0xC2, 0x2F, 0x00, 0x00, 0x44, 0x0F, 0xB6, 0x44, 0x24, 0x30 });
+    if (AutoRotationAddress)
+    {
+        AutoRotationBytes = (uintptr_t)MVirtualAlloc::Get().Alloc(7);
+        ModUtils::MemCopy(AutoRotationBytes, AutoRotationAddress, 7);
+    }
+}
+
+void HookPivotOffsetDisable()
+{
+    if (HookOffsetInterp && HookOffsetInterpBytes)
+    {
+        ModUtils::MemCopy(HookOffsetInterp, uintptr_t(HookOffsetInterpBytes), 12);
+    }
+}
+
+std::vector<uint16_t> PATTERN_PIVOT_OFFSET({ 0x0F, 0x59, 0xA3, 0x90, 0x00, 0x00, 0x00, 0x0F, 0x58, 0xEC, 0x0F, 0x29, 0xAB, 0xC0, 0x00, 0x00, 0x00, 0x0F, 0x29, 0xAB, 0xD0, 0x00, 0x00, 0x00, 0x0F, 0x29, 0xAB, 0xE0, 0x00, 0x00, 0x00, 0x48, 0x8B, 0x4D, 0xE0, 0x48, 0x33, 0xCC });
+UHookRelativeIntermediate HookPivotOffset(
+    PATTERN_PIVOT_OFFSET,
+    10,
+    &PivotOffset,
+    0,
+    "HookPivotOffset",
+    HookPivotOffsetEnable,
+    HookPivotOffsetDisable
+);
+
+UHookRelativeIntermediate HookPivotOffsetAlt(
+    std::vector<uint16_t>({ 0x66, 0x0F, 0x6F, 0x74, 0x24, 0x70, 0xE8, 0x3F, 0x85, 0x2A, 0x00, 0x85, 0xC0, 0x78, 0x56 }),
+    6,
+    &PivotOffset,
+    0,
+    "HookPivotOffsetAlt",
+    HookPivotOffsetEnable,
+    HookPivotOffsetDisable
+);
+
+//std::vector<uint16_t> PATTERN_COLLISION({ 0x48, 0x8B, 0x44, 0x24, 0x38, 0x0F, 0x58, 0x00, 0x0F, 0x29, 0x44, 0x24, 0x40, 0x48, 0x8D, 0x54, 0x24, 0x40, 0x48, 0x8D, 0x4D, 0x00, 0xE8, 0x54, 0xB1, 0x18, 0x00 });
+std::vector<uint16_t> PATTERN_COLLISION({ 0x0F, 0x28, 0x4D, 0x00, 0x0F, 0x28, 0x6D, 0x10, 0x0F, 0x5C, 0xCD, 0x0F, 0x28, 0xC1, 0x0F, 0x15, 0x05, 0x3B, 0x28, 0xEC, 0x02, 0x0F, 0xC6, 0xC8, 0xC4 });
+UHookRelativeIntermediate HookCollisionOffset(
+    PATTERN_COLLISION,
+    8,
+    &CameraCollisionOffset,
+    0,
+    "HookCollisionOffset"
+);
+
+
+#endif // if USE_TEST_PATTERNS
+
+#pragma warning(suppress:4100) // unused param
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
     //MEMORY_BASIC_INFORMATION meminfo;
@@ -463,10 +699,63 @@ DWORD WINAPI MainThread(LPVOID lpParam)
     //    ModUtils::Log("meminfo: %p %p %u %u %u", meminfo.BaseAddress, meminfo.AllocationBase, meminfo.RegionSize, meminfo.Type, meminfo.Protect);
     //}
     LoadConfig();
-    HookCameraDistance.Enable();
-    HookPivotInterp.Enable();
-    HookFoVMul.Enable();
+    //HookCameraDistance.Enable();
+    //HookPivotInterp.Enable();
+    //HookFoVMul.Enable();
 
+    std::vector <std::reference_wrapper<UHookRelativeIntermediate>> hooks = {
+        HookCameraDistance,
+        HookPivotInterp,
+        HookFoVMul,
+#if USE_TEST_PATTERNS
+        HookStorePivotRotation,
+        HookStoreCameraCoords,
+        HookStoreCameraMaxDistance,
+        HookPivotOffset,
+        HookCollisionOffset,
+#endif
+    };
+
+    for (UHookRelativeIntermediate& hook : hooks)
+    {
+        if (!hook.HasFoundSignature())
+        {
+            ModUtils::RaiseError("Failed to setup hook: " + hook.msg);
+        }
+    }
+
+    if constexpr(AUTOENABLE)
+    {
+        for (UHookRelativeIntermediate& hook : hooks)
+        {
+            hook.Enable();
+        }
+    }
+
+    while (true)
+    {
+        if (ModUtils::CheckHotkey(0x70/*F1*/))
+        {
+            for (UHookRelativeIntermediate& hook : hooks)
+            {
+                hook.Toggle();
+            }
+        }
+        if (ModUtils::CheckHotkey(0x71))
+        {
+            ModUtils::Log("PivotYaw = %f", PivotYaw);
+            glm::vec3 camera_offset = vec_from__m128(pvResolvedOffset);
+            ModUtils::Log("camera offset = %s %f", glm::to_string(camera_offset).c_str(), RelativeOffsetAlpha(vec_from__m128(pvResolvedOffset), fCamMaxDistance));
+            ModUtils::Log("interpolated camera max distance = %f", fCamMaxDistance);
+        }
+        if (ModUtils::CheckHotkey(0x72))
+        {
+            //PIVOT_INTERP_SPEED = PIVOT_INTERP_SPEED == 0.f ? 8.f : 0.f;
+            PIVOT_INTERP_DELAY = PIVOT_INTERP_DELAY ? 0 : 1;
+            ModUtils::Log("PIVOT_INTERP_DELAY = %u", PIVOT_INTERP_DELAY);
+        }
+        Sleep(2);
+    }
     //HookCameraDistance();
 
 #if 0
@@ -514,6 +803,7 @@ DWORD WINAPI MainThread(LPVOID lpParam)
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
+#pragma warning(suppress:4100) // unused param
                        LPVOID lpReserved
                      )
 {

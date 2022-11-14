@@ -52,6 +52,11 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include <sstream>
+#include <vector>
+#include <iterator>
+#include <string>
+#include <algorithm>
 
 /* Typedef for prototype of handler function. */
 typedef int (*ini_handler)(void* user, const char* section,
@@ -384,6 +389,9 @@ public:
     // and valid false values are "false", "no", "off", "0" (not case sensitive).
     bool GetBoolean(const std::string& section, const std::string& name, bool default_value) const;
 
+    template<size_t size, typename T>
+    std::vector<T> GetVector(const std::string& section, const std::string& name, std::vector<T> default_value) const;
+
 protected:
     int _error;
     std::map<std::string, std::string> _values;
@@ -461,6 +469,7 @@ inline bool INIReader::GetBoolean(const std::string& section, const std::string&
 {
     std::string valstr = Get(section, name, "");
     // Convert to lower case to make string comparisons case-insensitive
+    #pragma warning(suppress:4244)
     std::transform(valstr.begin(), valstr.end(), valstr.begin(), ::tolower);
     if (valstr == "true" || valstr == "yes" || valstr == "on" || valstr == "1")
         return true;
@@ -468,6 +477,19 @@ inline bool INIReader::GetBoolean(const std::string& section, const std::string&
         return false;
     else
         return default_value;
+}
+
+template<size_t size, typename T>
+inline std::vector<T> INIReader::GetVector(const std::string& section, const std::string& name, std::vector<T> default_value) const
+{
+    std::string valstr = Get(section, name, "");
+    std::replace_if(valstr.begin(), valstr.end(), [](unsigned char c) { return std::string("0123456789.").find(c) == std::string::npos; }, ' ');
+    std::istringstream stream(valstr);
+    std::istream_iterator<double> iterator(stream);
+    std::istream_iterator<double> end;
+    #pragma warning(suppress:4244)
+    std::vector<T> result(iterator, end);
+    return result.size() == size ? result : default_value;
 }
 
 inline std::string INIReader::MakeKey(const std::string& section, const std::string& name)

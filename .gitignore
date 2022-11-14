@@ -1,4 +1,5 @@
 
+/utils/*.exe
 /install_dir.txt
 
 ## Ignore Visual Studio temporary files, build results, and

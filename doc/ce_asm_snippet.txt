@@ -81,7 +81,7 @@ eldenring.exe+3B4918 - 44 0F29 6C 24 50      - movaps [rsp+50],xmm13
 eldenring.exe+3B491E - 44 0F29 74 24 40      - movaps [rsp+40],xmm14
 eldenring.exe+3B4924 - 44 0F29 7C 24 30      - movaps [rsp+30],xmm15
 eldenring.exe+3B492A - E8 A1BD9000           - call eldenring.exe+CC06D0 ; xmm0 = target cam distance after call
-eldenring.exe+3B492F - 48 8D 4C 24 20        - lea rcx,[rsp+20]
+eldenring.exe+3B492F - 48 8D 4C 24 20        - lea rcx,[rsp+20]				; inject call replacing this
 eldenring.exe+3B4934 - 0F28 F8               - movaps xmm7,xmm0
 eldenring.exe+3B4937 - E8 74BF9000           - call eldenring.exe+CC08B0
 eldenring.exe+3B493C - F3 44 0F10 3D E72CE202  - movss xmm15,[eldenring.exe+31D762C] { (0.02) }
@@ -296,12 +296,12 @@ eldenring.exe+3B4D33 - F3 45 0F5C C1         - subss xmm8,xmm9
 eldenring.exe+3B4D38 - F3 44 0F59 C7         - mulss xmm8,xmm7
 eldenring.exe+3B4D3D - F3 44 0F58 C0         - addss xmm8,xmm0
 eldenring.exe+3B4D42 - F3 44 0F11 83 B8010000  - movss [rbx+000001B8],xmm8
-eldenring.exe+3B4D4B - EB 1C                 - jmp eldenring.exe+3B4D69
-eldenring.exe+3B4D4D - F3 0F10 83 B8010000   - movss xmm0,[rbx+000001B8] ; interpolation code
+eldenring.exe+3B4D4B - EB 1C                 - jmp eldenring.exe+3B4D69			; signature starts
+eldenring.exe+3B4D4D - F3 0F10 83 B8010000   - movss xmm0,[rbx+000001B8]		; interpolation code
 eldenring.exe+3B4D55 - F3 0F5C F8            - subss xmm7,xmm0
 eldenring.exe+3B4D59 - F3 0F59 FE            - mulss xmm7,xmm6
 eldenring.exe+3B4D5D - F3 0F58 F8            - addss xmm7,xmm0
-eldenring.exe+3B4D61 - F3 0F11 BB B8010000   - movss [rbx+000001B8],xmm7
+eldenring.exe+3B4D61 - F3 0F11 BB B8010000   - movss [rbx+000001B8],xmm7		; signature ends, hook here
 eldenring.exe+3B4D69 - 8B 83 B8010000        - mov eax,[rbx+000001B8]
 eldenring.exe+3B4D6F - 44 0F28 8C 24 90000000  - movaps xmm9,[rsp+00000090]
 eldenring.exe+3B4D78 - 44 0F28 84 24 A0000000  - movaps xmm8,[rsp+000000A0]

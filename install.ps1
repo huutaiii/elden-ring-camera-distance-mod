@@ -58,6 +58,7 @@ if (Test-Path "$SolutionDir\install_dir.txt")
         {
             Write-Output "Info: config file doesn't exist"
         }
+        Copy-Item -Path "$SolutionDir\doc\config.ini" -Destination "$ConfigPath"
     }
 }
 else

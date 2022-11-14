@@ -188,7 +188,7 @@ namespace ModUtils
 	//      .high = reverse bit mask (0: compare, 1: ignore)
 	// e.g. pattern[2] = 0xf025 : compare current byte's high 4 bits with 0x25's high 4 bits
 	//      pattern[i] = 0xff00..0xffff : skip that byte and check the next ones
-	inline uintptr_t SigScan(std::vector<uint16_t> pattern, bool logProcess = false, std::string msg = {})
+	inline uintptr_t SigScan(std::vector<uint16_t> pattern, bool logProcess = false, std::string msg = {}, bool failSilently = false)
 	{
 		DWORD processId = GetCurrentProcessId();
 		uintptr_t regionStart = GetProcessBaseAddress(processId);
@@ -289,7 +289,7 @@ namespace ModUtils
 		}
 
 		Log("Stopped at: %p, num regions checked: %i", currentAddress, numRegionsChecked);
-		RaiseError("Could not find signature! " + msg);
+		if (!failSilently) RaiseError("Could not find signature! " + msg);
 		return 0;
 	}
 

@@ -57,5 +57,7 @@
     <Text Include="..\doc\ce_asm_pivot_interpolation.txt" />
     <Text Include="..\doc\ce_asm_gamethread.txt" />
     <Text Include="..\doc\disasm_fov.txt" />
+    <Text Include="..\doc\disasm_pivot_offset.txt" />
+    <Text Include="..\doc\disasm_misc.txt" />
   </ItemGroup>
 </Project>
