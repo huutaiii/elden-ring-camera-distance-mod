@@ -93,6 +93,7 @@ glm::vec3 RelativeOffset;
 std::queue<__m128> RelativeOffsetBuffer;
 extern "C" __m128 OffsetInterp = _mm_setzero_ps();
 extern "C" __m128 CollisionOffset = _mm_setzero_ps();
+float OffsetScale = 0.f;
 
 uintptr_t AutoRotationAddress;
 uintptr_t AutoRotationBytes;
@@ -114,21 +115,21 @@ extern "C"
     {
         //TODO: reduce offset based on collision
         glm::mat4x4 rotation = glm::rotate(PivotYaw, glm::vec3(0.f, 1.f, 0.f));
-        float a = RelativeOffsetAlpha(vec_from__m128(pvResolvedOffset), fCamMaxDistance);
-        glm::vec4 vOffset = rotation * glm::vec4(RelativeOffset, 0.f) * a;
+        float distance = RelativeOffsetAlpha(vec_from__m128(pvResolvedOffset), fCamMaxDistance) - OffsetScale;
+        OffsetScale += distance;
+        glm::vec4 vOffset = rotation * glm::vec4(RelativeOffset, 0.f) * OffsetScale;
 
         glm::vec3 vOffsetInterp = InterpV3(vec_from__m128(OffsetInterp), vOffset, PIVOT_INTERP_SPEED);
         __m128 offset = _mm_setr_ps(vOffsetInterp.x, vOffsetInterp.y, vOffsetInterp.z, 0.f);
 
-        float distance = glm::length(glm::vec3(vec_from__m128(OffsetInterp)) - vOffsetInterp);
-        if (distance > 0)
+        /*if (distance > 0.0)
         {
             ModUtils::MemSet(AutoRotationAddress, 0x90, 7);
         }
         else
         {
             ModUtils::MemCopy(AutoRotationAddress, AutoRotationBytes, 7);
-        }
+        }*/
 
         if (PIVOT_INTERP_DELAY > 0)
         {
@@ -644,7 +645,21 @@ void HookPivotOffsetEnable()
     if (AutoRotationAddress)
     {
         AutoRotationBytes = (uintptr_t)MVirtualAlloc::Get().Alloc(7);
-        ModUtils::MemCopy(AutoRotationBytes, AutoRotationAddress, 7);
+        //ModUtils::MemCopy(AutoRotationBytes, AutoRotationAddress, 7);
+        ModUtils::MemSet(AutoRotationAddress, 0x90, 7);
+    }
+
+    uintptr_t WobbleAddress = ModUtils::SigScan({ 0xF3, 0x0F, 0x11, 0x81, 0x44, 0x01, 0x00, 0x00, 0x76, 0x06, 0x89, 0xB9, 0x44, 0x01, 0x00, 0x00, 0x0F, 0x2F, 0xB9, 0x44, 0x01, 0x00, 0x00, 0x72, 0x2B, 0xF3, 0x0F, 0x10, 0x89, 0x40, 0x01, 0x00, 0x00 });
+    if (WobbleAddress)
+    {
+        ModUtils::MemSet(WobbleAddress, 0x90, 8);
+    }
+
+    uintptr_t ForceInterpAddress = ModUtils::SigScan({ 0x0F, 0x84, 0xC3, 0x00, 0x00, 0x00, 0x0F, 0x28, 0x65, 0xD0, 0x0F, 0x28, 0xD4, 0x0F, 0x59, 0xD4, 0x0F, 0x28, 0xCA, 0x0F, 0xC6, 0xCA, 0x66, 0xF3, 0x0F, 0x58, 0xD1, 0x0F, 0x28, 0xC1 });
+    if (ForceInterpAddress)
+    {
+        const char* code = "\x90\xE9";
+        ModUtils::MemCopy(ForceInterpAddress, (uintptr_t)code, 2);
     }
 }
 
@@ -707,14 +722,19 @@ DWORD WINAPI MainThread(LPVOID lpParam)
         HookCameraDistance,
         HookPivotInterp,
         HookFoVMul,
-#if USE_TEST_PATTERNS
-        HookStorePivotRotation,
-        HookStoreCameraCoords,
-        HookStoreCameraMaxDistance,
-        HookPivotOffset,
-        HookCollisionOffset,
-#endif
     };
+#if USE_TEST_PATTERNS
+    if (glm::length(RelativeOffset) > 0.001)
+    {
+        hooks.insert(hooks.end(), {
+            HookStorePivotRotation,
+            HookStoreCameraCoords,
+            HookStoreCameraMaxDistance,
+            HookPivotOffset,
+            HookCollisionOffset,
+        });
+    }
+#endif
 
     for (UHookRelativeIntermediate& hook : hooks)
     {
