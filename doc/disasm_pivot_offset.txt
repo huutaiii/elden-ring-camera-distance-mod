@@ -104,7 +104,7 @@ eldenring.exe.text+3B47C7 - 0F59 9B 80000000      - mulps xmm3,[rbx+00000080]
 eldenring.exe.text+3B47CE - 0F58 EB               - addps xmm5,xmm3
 eldenring.exe.text+3B47D1 - 0F59 A3 90000000      - mulps xmm4,[rbx+00000090]			; xmm4 *= character_forward; inject here (10 bytes)
 eldenring.exe.text+3B47D8 - 0F58 EC               - addps xmm5,xmm4						; xmm5 += world_space_offset (Right, Up, Forward), offsetting this looks stuttery without interpolation
-eldenring.exe.text+3B47DB - 0F29 AB C0000000      - movaps [rbx+000000C0],xmm5
+eldenring.exe.text+3B47DB - 0F29 AB C0000000      - movaps [rbx+000000C0],xmm5          ; set pivot coords
 eldenring.exe.text+3B47E2 - 0F29 AB D0000000      - movaps [rbx+000000D0],xmm5
 eldenring.exe.text+3B47E9 - 0F29 AB E0000000      - movaps [rbx+000000E0],xmm5
 eldenring.exe.text+3B47F0 - 48 8B 4D E0           - mov rcx,[rbp-20]
@@ -167,7 +167,7 @@ eldenring.exe.text+3B3E5D - 0F85 FF040000         - jne eldenring.exe.text+3B436
 eldenring.exe.text+3B3E63 - 40 38 B9 32030000     - cmp [rcx+00000332],dil
 eldenring.exe.text+3B3E6A - 0F85 F2040000         - jne eldenring.exe.text+3B4362
 eldenring.exe.text+3B3E70 - 40 38 B9 10030000     - cmp [rcx+00000310],dil
-eldenring.exe.text+3B3E77 - 74 0C                 - je eldenring.exe.text+3B3E85
+eldenring.exe.text+3B3E77 - 74 0C                 - je eldenring.exe.text+3B3E85            ; skips next 2 instructions when not locked on
 eldenring.exe.text+3B3E79 - 48 89 B9 40010000     - mov [rcx+00000140],rdi
 eldenring.exe.text+3B3E80 - E9 DD040000           - jmp eldenring.exe.text+3B4362
 eldenring.exe.text+3B3E85 - 48 8B 41 60           - mov rax,[rcx+60]
@@ -256,7 +256,7 @@ eldenring.exe.text+3B4033 - 44 0F59 C0            - mulps xmm8,xmm0
 eldenring.exe.text+3B4037 - 0F28 83 50010000      - movaps xmm0,[rbx+00000150]
 eldenring.exe.text+3B403E - 0FC6 C0 44            - shufps xmm0,xmm0,44
 eldenring.exe.text+3B4042 - 45 0FC6 C0 44         - shufps xmm8,xmm8,44
-eldenring.exe.text+3B4047 - 44 0F58 C0            - addps xmm8,xmm0					; xmm8 = (Pitch, Yaw, _, _)
+eldenring.exe.text+3B4047 - 44 0F58 C0            - addps xmm8,xmm0					; xmm8 = (Pitch, Yaw, _, _), is not updated when locked on
 eldenring.exe.text+3B404B - F3 0F10 07            - movss xmm0,[rdi]
 eldenring.exe.text+3B404F - 41 0F2F C0            - comiss xmm0,xmm8
 eldenring.exe.text+3B4053 - F3 44 0F11 45 B7      - movss [rbp-49],xmm8             ; HookStorePivotPosition
@@ -1103,8 +1103,8 @@ eldenring.exe.text+BFC324 - 0F28 C4               - movaps xmm0,xmm4
 eldenring.exe.text+BFC327 - 0F55 C2               - andnps xmm0,xmm2
 eldenring.exe.text+BFC32A - 0F54 CC               - andps xmm1,xmm4
 eldenring.exe.text+BFC32D - 0F56 C8               - orps xmm1,xmm0
-eldenring.exe.text+BFC330 - 0F29 5D A0            - movaps [rbp-60],xmm3                ; xmm3.w = also retraction factor
-eldenring.exe.text+BFC334 - 0F29 4D B0            - movaps [rbp-50],xmm1
+eldenring.exe.text+BFC330 - 0F29 5D A0            - movaps [rbp-60],xmm3                ; xmm3[0..95] = collision trace end; xmm3.w = also retraction factor
+eldenring.exe.text+BFC334 - 0F29 4D B0            - movaps [rbp-50],xmm1                ; xmm1 = ?
 eldenring.exe.text+BFC338 - 0F29 6D 90            - movaps [rbp-70],xmm5
 eldenring.exe.text+BFC33C - 48 8B 05 EDDC0503     - mov rax,[eldenring.exe+3C5B030]
 eldenring.exe.text+BFC343 - 48 85 C0              - test rax,rax

@@ -22,8 +22,9 @@ constexpr unsigned int JMP_SIZE = 14;
 constexpr bool AUTOENABLE = true;
 
 #define USE_TEST_PATTERNS 1
+#define DISABLE_AUTO_ROTATION 0
 unsigned int PIVOT_INTERP_DELAY = 0;
-float PIVOT_INTERP_SPEED = 5.f;
+float PIVOT_INTERP_SPEED = 16.f;
 
 HMODULE g_hModule;
 
@@ -62,7 +63,12 @@ glm::vec4 vec_from__m128(__m128 m)
     return glm::vec4(v[3], v[2], v[1], v[0]);
 }
 
-float RelativeOffsetAlpha(glm::vec3 offset, float max_distance)
+inline __m128 GLMToXMM(glm::vec3 v)
+{
+    return _mm_setr_ps(v.x, v.y, v.z, 0.f);
+}
+
+inline float RelativeOffsetAlpha(glm::vec3 offset, float max_distance)
 {
     return glm::length(offset) / max_distance;
 }
@@ -70,7 +76,14 @@ float RelativeOffsetAlpha(glm::vec3 offset, float max_distance)
 template<typename T>
 inline T min(T a, T b) { return a < b ? a : b; }
 
-glm::vec3 InterpV3(glm::vec3 current, glm::vec3 target, float speed = 1, float deltaTime = 1.f/60.f, float minDistance = 0.001f)
+template<typename T>
+inline T max(T a, T b) { return a > b ? a : b; }
+
+// Clamps x to range [a..b]
+template<typename T>
+inline T clamp(T x, T a, T b) { return min(b,max(a,x)); }
+
+inline glm::vec3 V3InterpTo(glm::vec3 current, glm::vec3 target, float speed = 1, float deltaTime = 1.f/60.f, float minDistance = 0.001f)
 {
     if (speed <= 0.f)
     {
@@ -85,7 +98,7 @@ glm::vec3 InterpV3(glm::vec3 current, glm::vec3 target, float speed = 1, float d
 
     //glm::vec3 vel = delta * deltaTime * speed;
     //vel = glm::normalize(vel) * min(glm::length(vel), glm::length(delta));
-    glm::vec3 vel = delta * min(deltaTime * speed, 1.f);
+    glm::vec3 vel = delta * clamp(deltaTime * speed, 0.f, 1.f);
     return current + vel;
 }
 
@@ -94,6 +107,8 @@ std::queue<__m128> RelativeOffsetBuffer;
 extern "C" __m128 OffsetInterp = _mm_setzero_ps();
 extern "C" __m128 CollisionOffset = _mm_setzero_ps();
 float OffsetScale = 0.f;
+
+glm::vec3 LastOffset = { 0, 0, 0 };
 
 uintptr_t AutoRotationAddress;
 uintptr_t AutoRotationBytes;
@@ -109,6 +124,8 @@ extern "C"
     void SetCameraMaxDistance();
     void PivotOffset();
     void CameraCollisionOffset();
+    void CameraOffset();
+    void CollisionEndOffset();
 
     // coord system is Z-forward Y-up
     __m128 CalcPivotOffset() // compiled code uses xmm0-5 (used to, maybe)
@@ -119,7 +136,7 @@ extern "C"
         OffsetScale += distance;
         glm::vec4 vOffset = rotation * glm::vec4(RelativeOffset, 0.f) * OffsetScale;
 
-        glm::vec3 vOffsetInterp = InterpV3(vec_from__m128(OffsetInterp), vOffset, PIVOT_INTERP_SPEED);
+        glm::vec3 vOffsetInterp = V3InterpTo(vec_from__m128(OffsetInterp), vOffset, PIVOT_INTERP_SPEED);
         __m128 offset = _mm_setr_ps(vOffsetInterp.x, vOffsetInterp.y, vOffsetInterp.z, 0.f);
 
         /*if (distance > 0.0)
@@ -152,6 +169,20 @@ extern "C"
         OffsetInterp = offset;
 
         return OffsetInterp;
+    }
+
+    void CalcCameraOffset()
+    {
+        float offsetScale = RelativeOffsetAlpha(vec_from__m128(pvResolvedOffset), fCamMaxDistance);
+
+        glm::mat4x4 rotation = glm::rotate(PivotYaw, glm::vec3(0.f, 1.f, 0.f));
+        glm::vec3 targetOffset = rotation * glm::vec4(RelativeOffset, 0.f) * 1.f;
+        glm::vec3 offset = V3InterpTo(LastOffset, targetOffset, PIVOT_INTERP_SPEED);
+        LastOffset = offset;
+        OffsetInterp = GLMToXMM(offset * offsetScale);
+        CollisionOffset = GLMToXMM(offset);
+
+        //_mm_setr_ps(offset.x, offset.y, offset.z, 0.f);
     }
 }
 
@@ -632,8 +663,9 @@ uintptr_t HookOffsetInterp;
 LPVOID HookOffsetInterpBytes;
 void HookPivotOffsetEnable()
 {
+    // force update pivot location when pushing right stick
     std::vector<uint16_t> pattern({ 0x0F, 0x8A, 0x86, 0x00, 0x00, 0x00, 0x0F, 0x85, 0x80, 0x00, 0x00, 0x00, 0x44, 0x0F, 0x59, 0x83, 0x70, 0x02, 0x00, 0x00, 0x48, 0x8D, 0xBB, 0x58, 0x02, 0x00, 0x00, 0x48, 0x8D, 0xB3, 0x5C, 0x02, 0x00, 0x00 });
-    HookOffsetInterp = ModUtils::SigScan(pattern);
+    HookOffsetInterp = ModUtils::SigScan(pattern); // ???
     if (HookOffsetInterp)
     {
         HookOffsetInterpBytes = MVirtualAlloc::Get().Alloc(12);
@@ -641,6 +673,7 @@ void HookPivotOffsetEnable()
         ModUtils::MemSet(HookOffsetInterp, 0x90, 12);
     }
 
+#if DISABLE_AUTO_ROTATION
     AutoRotationAddress = ModUtils::SigScan({ 0x0F, 0x29, 0xA6, 0x50, 0x01, 0x00, 0x00, 0x41, 0x0F, 0x28, 0xCF, 0x48, 0x8B, 0xCE, 0xE8, 0xC2, 0x2F, 0x00, 0x00, 0x44, 0x0F, 0xB6, 0x44, 0x24, 0x30 });
     if (AutoRotationAddress)
     {
@@ -661,6 +694,7 @@ void HookPivotOffsetEnable()
         const char* code = "\x90\xE9";
         ModUtils::MemCopy(ForceInterpAddress, (uintptr_t)code, 2);
     }
+#endif
 }
 
 void HookPivotOffsetDisable()
@@ -678,6 +712,17 @@ UHookRelativeIntermediate HookPivotOffset(
     &PivotOffset,
     0,
     "HookPivotOffset",
+    HookPivotOffsetEnable,
+    HookPivotOffsetDisable
+);
+
+std::vector<uint16_t> PATTERN_CAMERA_OFFSET({ 0x0F, 0x29, 0x87, 0x40, 0x04, 0x00, 0x00, 0x0F, 0x29, 0x8F, 0x50, 0x04, 0x00, 0x00, 0x48, 0x83, 0x3D, 0x09, 0xC4, 0x89, 0x03, 0x00, 0x48, 0x89, 0xAC, 0x24, 0x20, 0x01, 0x00, 0x00, 0x75, 0x27 });
+UHookRelativeIntermediate HookCameraOffset(
+    PATTERN_CAMERA_OFFSET,
+    7,
+    &CameraOffset,
+    0,
+    "HookCameraOffset",
     HookPivotOffsetEnable,
     HookPivotOffsetDisable
 );
@@ -702,6 +747,15 @@ UHookRelativeIntermediate HookCollisionOffset(
     "HookCollisionOffset"
 );
 
+//std::vector<uint16_t> PATTERN_COLLISION_END({ 0x0F, 0x54, 0xCC, 0x0F, 0x56, 0xC8, 0x0F, 0x29, 0x5D, 0xA0, 0x0F, 0x29, 0x4D, 0xB0, 0x0F, 0x29, 0x6D, 0x90, 0x48, 0x8B, 0x05, 0xED, 0xDC, 0x05, 0x03 });
+std::vector<uint16_t> PATTERN_COLLISION_END({ 0x48, 0x8B, 0x44, 0x24, 0x38, 0x0F, 0x58, 0x00, 0x0F, 0x29, 0x44, 0x24, 0x40, 0x48, 0x8D, 0x54, 0x24, 0x40, 0x48, 0x8D, 0x4D, 0x00, 0xE8, 0x54, 0xB1, 0x18, 0x00 });
+UHookRelativeIntermediate HookCollisionEndOffset(
+    PATTERN_COLLISION_END,
+    8,
+    &CollisionEndOffset,
+    0,
+    "HookCollisionEndOffset"
+);
 
 #endif // if USE_TEST_PATTERNS
 
@@ -730,8 +784,9 @@ DWORD WINAPI MainThread(LPVOID lpParam)
             HookStorePivotRotation,
             HookStoreCameraCoords,
             HookStoreCameraMaxDistance,
-            HookPivotOffset,
-            HookCollisionOffset,
+            HookCameraOffset,
+            HookCollisionEndOffset,
+            //HookCollisionOffset,
         });
     }
 #endif

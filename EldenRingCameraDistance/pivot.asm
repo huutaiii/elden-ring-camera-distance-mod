@@ -72,31 +72,6 @@ extern CalcPivotOffset : proto
 		ret
 	CameraCollisionOffset endp
 
-	SetPivotYaw proc
-		movaps xmm0,xmm8
-		shufps xmm0,xmm0,93h
-		movss dword ptr [PivotYaw],xmm0
-		ret
-	SetPivotYaw endp
-
-	SetCameraCoords proc
-		inc [iCamOffset]
-
-		cmp [iCamOffset],3			; we can do whatever with the flags?
-		jne continue
-
-		movaps [pvResolvedOffset],xmm6
-		mov [iCamOffset],0
-
-		continue:
-		ret
-	SetCameraCoords endp
-
-	SetCameraMaxDistance proc
-		movss [fCamMaxDistance],xmm7
-		ret
-	SetCameraMaxDistance endp
-
 	LoadingEnd proc
 		;movsxd r8,dword ptr [rbx+48]
 		;add r8,r8
