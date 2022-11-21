@@ -23,6 +23,7 @@ constexpr double PI = 3.14159265359;
 constexpr unsigned int JMP_SIZE = 14;
 constexpr bool AUTOENABLE = true;
 
+#define USE_HOTKEYS 0
 #define USE_TEST_PATTERNS 1
 #define DISABLE_AUTO_ROTATION 0
 unsigned int PIVOT_INTERP_DELAY = 0;
@@ -239,6 +240,13 @@ std::string GetDefaultConfig()
     return std::string();
 }
 
+struct SModConfig {
+    bool bUseCameraDistance = false;
+    bool bUsePivotSpeed = false;
+    bool bUseFoV = false;
+    bool bUseCameraOffset = false;
+} ModConfig;
+
 void LoadConfig()
 {
     std::string configPath = ModUtils::GetModuleFolderPath() + "\\config.ini";
@@ -279,9 +287,13 @@ void LoadConfig()
         ModUtils::Log("using offset = %f", offset);
         CameraDistanceAdd = _mm_set_ss(offset);
 
+        ModConfig.bUseCameraDistance = multiplier != 1.f || offset != 0.f;
+
         float fovmul = reader.GetFloat("fov", "multiplier", 1.0f);
         ModUtils::Log("using fov multiplier = %f", fovmul);
         FoVMul = _mm_set_ss(fovmul);
+
+        ModConfig.bUseFoV = fovmul != 1.f;
 
         float follow_speed_multiplier = reader.GetFloat("camera_interpolation", "follow_speed_multiplier", 1.f);
         float speed_mul_z = reader.GetFloat("camera_interpolation", "follow_speed_multiplier_z", 0.f);
@@ -291,14 +303,18 @@ void LoadConfig()
         vInterpSpeedMul = (speed_mul_z > 0.f) ? _mm_setr_ps(follow_speed_multiplier, speed_mul_z, follow_speed_multiplier, 0.f)
             : _mm_setr_ps(follow_speed_multiplier, follow_speed_multiplier, follow_speed_multiplier, 0.f);
 
-        std::vector<float> relative_offset_val = reader.GetVector<3, float>("camera_offset", "offset", std::vector<float>({}));
+        ModConfig.bUsePivotSpeed = follow_speed_multiplier != 1.f || speed_mul_z != 0.f;
+
+        std::vector<float> relative_offset_val = reader.GetVector<3, float>("camera_offset", "offset", std::vector<float>(3, 0.f));
         glm::vec3 relative_offset(relative_offset_val[0], relative_offset_val[1], relative_offset_val[2]);
         ModUtils::Log("using relative_offset = %s", glm::to_string(relative_offset).c_str());
         RelativeOffset = relative_offset;
 
-        std::vector<float> lockon_offset_val = reader.GetVector<3, float>("camera_offset", "lockon_offset", std::vector<float>({}));
+        std::vector<float> lockon_offset_val = reader.GetVector<3, float>("camera_offset", "lockon_offset", std::vector<float>(3, 0.f));
         LockedonOffset = glm::vec3(lockon_offset_val[0], lockon_offset_val[1], lockon_offset_val[2]);
         ModUtils::Log("using lockon_offset = %s", glm::to_string(LockedonOffset).c_str());
+
+        ModConfig.bUseCameraOffset = glm::length(RelativeOffset) + glm::length(LockedonOffset) > 0.0001;
     }
 }
 
@@ -705,14 +721,14 @@ LPVOID HookOffsetInterpBytes;
 void HookPivotOffsetEnable()
 {
     // force update pivot location when pushing right stick
-    std::vector<uint16_t> pattern({ 0x0F, 0x8A, 0x86, 0x00, 0x00, 0x00, 0x0F, 0x85, 0x80, 0x00, 0x00, 0x00, 0x44, 0x0F, 0x59, 0x83, 0x70, 0x02, 0x00, 0x00, 0x48, 0x8D, 0xBB, 0x58, 0x02, 0x00, 0x00, 0x48, 0x8D, 0xB3, 0x5C, 0x02, 0x00, 0x00 });
-    HookOffsetInterp = ModUtils::SigScan(pattern); // ???
+    /*std::vector<uint16_t> pattern({ 0x0F, 0x8A, 0x86, 0x00, 0x00, 0x00, 0x0F, 0x85, 0x80, 0x00, 0x00, 0x00, 0x44, 0x0F, 0x59, 0x83, 0x70, 0x02, 0x00, 0x00, 0x48, 0x8D, 0xBB, 0x58, 0x02, 0x00, 0x00, 0x48, 0x8D, 0xB3, 0x5C, 0x02, 0x00, 0x00 });
+    HookOffsetInterp = ModUtils::SigScan(pattern);
     if (HookOffsetInterp)
     {
         HookOffsetInterpBytes = MVirtualAlloc::Get().Alloc(12);
         ModUtils::MemCopy(uintptr_t(HookOffsetInterpBytes), HookOffsetInterp, 12);
         ModUtils::MemSet(HookOffsetInterp, 0x90, 12);
-    }
+    }*/
 
 #if DISABLE_AUTO_ROTATION
     AutoRotationAddress = ModUtils::SigScan({ 0x0F, 0x29, 0xA6, 0x50, 0x01, 0x00, 0x00, 0x41, 0x0F, 0x28, 0xCF, 0x48, 0x8B, 0xCE, 0xE8, 0xC2, 0x2F, 0x00, 0x00, 0x44, 0x0F, 0xB6, 0x44, 0x24, 0x30 });
@@ -832,13 +848,21 @@ DWORD WINAPI MainThread(LPVOID lpParam)
     //HookPivotInterp.Enable();
     //HookFoVMul.Enable();
 
-    std::vector <std::reference_wrapper<UHookRelativeIntermediate>> hooks = {
-        HookCameraDistance,
-        HookPivotInterp,
-        HookFoVMul,
+    std::vector <std::reference_wrapper<UHookRelativeIntermediate>> hooks;
+
+    auto addHookIf = [&hooks](UHookRelativeIntermediate& hook, bool condition)
+    {
+        if (condition) {
+            hooks.push_back(hook);
+        }
     };
+
+    addHookIf(HookCameraDistance, ModConfig.bUseCameraDistance);
+    addHookIf(HookPivotInterp, ModConfig.bUsePivotSpeed);
+    addHookIf(HookFoVMul, ModConfig.bUseFoV);
+
 #if USE_TEST_PATTERNS
-    if (glm::length(RelativeOffset) > 0.001)
+    if (ModConfig.bUseCameraOffset)
     {
         hooks.insert(hooks.end(), {
             HookStorePivotRotation,
@@ -869,6 +893,7 @@ DWORD WINAPI MainThread(LPVOID lpParam)
         }
     }
 
+#if USE_HOTKEYS
     while (true)
     {
         if (ModUtils::CheckHotkey(0x70/*F1*/))
@@ -878,21 +903,9 @@ DWORD WINAPI MainThread(LPVOID lpParam)
                 hook.Toggle();
             }
         }
-        if (ModUtils::CheckHotkey(0x71))
-        {
-            ModUtils::Log("PivotYaw = %f", PivotYaw);
-            glm::vec3 camera_offset = vec_from__m128(pvResolvedOffset);
-            ModUtils::Log("camera offset = %s %f", glm::to_string(camera_offset).c_str(), RelativeOffsetAlpha(vec_from__m128(pvResolvedOffset), fCamMaxDistance));
-            ModUtils::Log("interpolated camera max distance = %f", fCamMaxDistance);
-        }
-        if (ModUtils::CheckHotkey(0x72))
-        {
-            //PIVOT_INTERP_SPEED = PIVOT_INTERP_SPEED == 0.f ? 8.f : 0.f;
-            PIVOT_INTERP_DELAY = PIVOT_INTERP_DELAY ? 0 : 1;
-            ModUtils::Log("PIVOT_INTERP_DELAY = %u", PIVOT_INTERP_DELAY);
-        }
         Sleep(2);
     }
+#endif
     //HookCameraDistance();
 
 #if 0
