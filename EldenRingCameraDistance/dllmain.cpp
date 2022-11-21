@@ -10,6 +10,7 @@
 #include <functional>
 #include <memory>
 #include <queue>
+#include <cmath>
 
 #include <ModUtils.h>
 #include <INIReader.h>
@@ -18,6 +19,7 @@
 #include <glm/gtx/string_cast.hpp>
 #pragma warning(pop)
 
+constexpr double PI = 3.14159265359;
 constexpr unsigned int JMP_SIZE = 14;
 constexpr bool AUTOENABLE = true;
 
@@ -71,6 +73,13 @@ inline __m128 GLMToXMM(glm::vec3 v)
     return _mm_setr_ps(v.x, v.y, v.z, 0.f);
 }
 
+inline glm::vec4 XMMToGLM(__m128 m)
+{
+    float v[4];
+    _mm_storer_ps(v, m); // MSVC specific, keeps components in reverse order
+    return glm::vec4(v[3], v[2], v[1], v[0]);
+}
+
 inline float RelativeOffsetAlpha(glm::vec3 offset, float max_distance)
 {
     return glm::length(offset) / max_distance;
@@ -84,7 +93,20 @@ inline T max(T a, T b) { return a > b ? a : b; }
 
 // Clamps x to range [a..b]
 template<typename T>
-inline T clamp(T x, T a, T b) { return min(b,max(a,x)); }
+inline T clamp(T x, T a = 0.0, T b = 1.0) { return min(b,max(a,x)); }
+
+template<typename Tv, typename Ta>
+inline Tv lerp(Tv x, Tv y, Ta a) { return x * ((Ta)1.0 - a) + y * a; }
+
+template<typename T>
+inline T smoothstep(T edge0, T edge1, T x) {
+    x = clamp((x - edge0) / (edge1 - edge0), (T)0, (T)1);
+    return x * x * (3 - 2 * x);
+}
+
+template<typename T> T EaseInOutSine(T x) {
+    return -(cos(PI * x) - 1) / 2;
+}
 
 inline glm::vec3 V3InterpTo(glm::vec3 current, glm::vec3 target, float speed = 1, float deltaTime = 1.f/60.f, float minDistance = 0.001f)
 {
@@ -110,6 +132,7 @@ glm::vec3 LockedonOffset;
 std::queue<__m128> RelativeOffsetBuffer;
 extern "C" __m128 OffsetInterp = _mm_setzero_ps();
 extern "C" __m128 CollisionOffset = _mm_setzero_ps();
+extern "C" __m128 TargetOffset = _mm_setzero_ps();
 float OffsetScale = 0.f;
 
 glm::vec3 LastOffset = { 0, 0, 0 };
@@ -121,8 +144,10 @@ extern "C"
 {
     float PivotYaw = 0.f;
     __m128 pvResolvedOffset = _mm_setzero_ps();
+    __m128 pvPivotPosition = _mm_setzero_ps();
     float fCamMaxDistance = 0.f;
     uint32_t bHasTargetLock = 0;
+    __m128 pvTargetPosition = _mm_setzero_ps();
     
     void SetPivotYaw();
     void SetCameraCoords();
@@ -186,10 +211,13 @@ extern "C"
         glm::mat4x4 rotation = glm::rotate(PivotYaw, glm::vec3(0.f, 1.f, 0.f));
         glm::vec3 targetOffset = rotation * glm::vec4(localOffset, 0.f) * 1.f;
         glm::vec3 offset = V3InterpTo(LastOffset, targetOffset, PIVOT_INTERP_SPEED);
+        float targetDistance = glm::length(glm::vec3(XMMToGLM(pvPivotPosition)) - glm::vec3(XMMToGLM(pvTargetPosition)));
+        float targetOffsetScale = log(targetDistance);
         LastOffset = offset;
-        OffsetInterp = GLMToXMM(offset * offsetScale);
-        CollisionOffset = GLMToXMM(offset); // maybe scale this by distance to target so we don't spin around when we get too close?
-
+        OffsetInterp = GLMToXMM(offset * max(offsetScale - 1.f / targetDistance, -1.f));
+        CollisionOffset = GLMToXMM(offset);
+        TargetOffset = GLMToXMM(offset * offsetScale * targetOffsetScale);
+        
         //_mm_setr_ps(offset.x, offset.y, offset.z, 0.f);
     }
 }
