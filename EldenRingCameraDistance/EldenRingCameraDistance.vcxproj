@@ -196,6 +196,7 @@
     <Text Include="..\doc\ce_asm_pivot_interpolation.txt" />
     <Text Include="..\doc\ce_asm_snippet.txt" />
     <Text Include="..\doc\disasm_fov.txt" />
+    <Text Include="..\doc\disasm_lockon.txt" />
     <Text Include="..\doc\disasm_misc.txt" />
     <Text Include="..\doc\disasm_offset.txt" />
     <Text Include="..\doc\disasm_pivot_offset.txt" />

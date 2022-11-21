@@ -11,10 +11,12 @@ extern FoVMul : dword
 extern PivotYaw : dword
 extern pvResolvedOffset : xmmword
 extern fCamMaxDistance : dword
+extern bHasTargetLock : dword
 
 ; in
 extern OffsetInterp : xmmword
 extern CollisionOffset : xmmword
+extern bDoLockTargetOffset : dword
 
 .data
 	iCamOffset byte 0
@@ -71,17 +73,28 @@ extern CollisionOffset : xmmword
 		ret
 	CollisionEndOffset endp
 
+	TargetLockOffset proc
+		subps xmm0,[OffsetInterp]		; re-center lock-on target
+		subps xmm0,[OffsetInterp]
+		ret
+	TargetLockOffset endp
+
 	SetPivotYaw proc
-		movaps xmm0,xmm8
-		shufps xmm0,xmm0,93h
-		movss dword ptr [PivotYaw],xmm0
+		;movaps xmm0,xmm8
+		;shufps xmm0,xmm0,93h
+		;movss dword ptr [PivotYaw],xmm0
+		movaps xmm1,[rsi+150h]
+		shufps xmm1,xmm1,93h
+		movss dword ptr [PivotYaw],xmm1
+		shufps xmm1,xmm1,93h
+		; this leaves xmm1 with non-zero values in [32..127] which isn't in the original code
 		ret
 	SetPivotYaw endp
 
 	SetCameraCoords proc
 		inc [iCamOffset]
 
-		cmp [iCamOffset],3			; we can do whatever with the flags?
+		cmp [iCamOffset],3	
 		jne continue				; skip until every 3rd call of frame
 
 		movaps [pvResolvedOffset],xmm6
@@ -95,5 +108,16 @@ extern CollisionOffset : xmmword
 		movss [fCamMaxDistance],xmm7
 		ret
 	SetCameraMaxDistance endp
+
+	SetTargetLockState proc
+		je lock_f
+	lock_t:
+		mov dword ptr [bHasTargetLock],1
+		jmp lock_ret
+	lock_f:
+		mov dword ptr [bHasTargetLock],0
+	lock_ret:
+		ret
+	SetTargetLockState endp
 
 end

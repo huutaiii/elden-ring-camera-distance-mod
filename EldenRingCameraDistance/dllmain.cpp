@@ -54,6 +54,9 @@ extern "C"
     void PassPivotRotation();
 
     float* FrameTime;
+
+    void TargetLockOffset();
+    void SetTargetLockState();
 }
 
 glm::vec4 vec_from__m128(__m128 m)
@@ -103,6 +106,7 @@ inline glm::vec3 V3InterpTo(glm::vec3 current, glm::vec3 target, float speed = 1
 }
 
 glm::vec3 RelativeOffset;
+glm::vec3 LockedonOffset;
 std::queue<__m128> RelativeOffsetBuffer;
 extern "C" __m128 OffsetInterp = _mm_setzero_ps();
 extern "C" __m128 CollisionOffset = _mm_setzero_ps();
@@ -118,6 +122,7 @@ extern "C"
     float PivotYaw = 0.f;
     __m128 pvResolvedOffset = _mm_setzero_ps();
     float fCamMaxDistance = 0.f;
+    uint32_t bHasTargetLock = 0;
     
     void SetPivotYaw();
     void SetCameraCoords();
@@ -130,6 +135,7 @@ extern "C"
     // coord system is Z-forward Y-up
     __m128 CalcPivotOffset() // compiled code uses xmm0-5 (used to, maybe)
     {
+#if 0
         //TODO: reduce offset based on collision
         glm::mat4x4 rotation = glm::rotate(PivotYaw, glm::vec3(0.f, 1.f, 0.f));
         float distance = RelativeOffsetAlpha(vec_from__m128(pvResolvedOffset), fCamMaxDistance) - OffsetScale;
@@ -168,19 +174,21 @@ extern "C"
         }
         OffsetInterp = offset;
 
+#endif
         return OffsetInterp;
     }
 
     void CalcCameraOffset()
     {
         float offsetScale = RelativeOffsetAlpha(vec_from__m128(pvResolvedOffset), fCamMaxDistance);
+        glm::vec3 localOffset = bHasTargetLock ? LockedonOffset : RelativeOffset;
 
         glm::mat4x4 rotation = glm::rotate(PivotYaw, glm::vec3(0.f, 1.f, 0.f));
-        glm::vec3 targetOffset = rotation * glm::vec4(RelativeOffset, 0.f) * 1.f;
+        glm::vec3 targetOffset = rotation * glm::vec4(localOffset, 0.f) * 1.f;
         glm::vec3 offset = V3InterpTo(LastOffset, targetOffset, PIVOT_INTERP_SPEED);
         LastOffset = offset;
         OffsetInterp = GLMToXMM(offset * offsetScale);
-        CollisionOffset = GLMToXMM(offset);
+        CollisionOffset = GLMToXMM(offset); // maybe scale this by distance to target so we don't spin around when we get too close?
 
         //_mm_setr_ps(offset.x, offset.y, offset.z, 0.f);
     }
@@ -259,6 +267,10 @@ void LoadConfig()
         glm::vec3 relative_offset(relative_offset_val[0], relative_offset_val[1], relative_offset_val[2]);
         ModUtils::Log("using relative_offset = %s", glm::to_string(relative_offset).c_str());
         RelativeOffset = relative_offset;
+
+        std::vector<float> lockon_offset_val = reader.GetVector<3, float>("camera_offset", "lockon_offset", std::vector<float>({}));
+        LockedonOffset = glm::vec3(lockon_offset_val[0], lockon_offset_val[1], lockon_offset_val[2]);
+        ModUtils::Log("using lockon_offset = %s", glm::to_string(LockedonOffset).c_str());
     }
 }
 
@@ -634,9 +646,10 @@ UHookRelativeIntermediate HookFoVMul(
 
 #if USE_TEST_PATTERNS
 
+std::vector<uint16_t> PATTERN_CAMERA_YAW = { 0xF3, 0x0F, 0x10, 0x8E, 0x50, 0x01, 0x00, 0x00, 0x48, 0x8D, 0x8C, 0x24, 0x90, 0x00, 0x00, 0x00, 0x48, 0x8B, 0xF8, 0xE8, 0x9E, 0xC3, 0xFF, 0xFF, 0x48, 0x8D, 0x8C, 0x24, 0xD0, 0x00, 0x00, 0x00 };
 UHookRelativeIntermediate HookStorePivotRotation(
-    std::vector<uint16_t>({ 0xF3, 0x44, 0x0F, 0x11, 0x45, 0xB7, 0x44, 0x0F, 0x29, 0x45, 0xC7, 0x76, 0x05 }),
-    11,
+    PATTERN_CAMERA_YAW/*std::vector<uint16_t>({ 0xF3, 0x44, 0x0F, 0x11, 0x45, 0xB7, 0x44, 0x0F, 0x29, 0x45, 0xC7, 0x76, 0x05 })*/,
+    8,
     &SetPivotYaw,
     0,
     "HookStorePivotRotation"
@@ -757,6 +770,25 @@ UHookRelativeIntermediate HookCollisionEndOffset(
     "HookCollisionEndOffset"
 );
 
+extern "C" uint32_t bDoLockTargetOffset = 0;
+std::vector<uint16_t> PATTERN_LOCKON_OFFSET = { 0x44, 0x88, 0xA9, 0x12, 0x03, 0x00, 0x00, 0x0F, 0x28, 0x00, 0x66, 0x0F, 0x7F, 0x81, 0xF0, 0x02, 0x00, 0x00, 0x0F, 0x28, 0x0B, 0x66, 0x0F, 0x7F, 0x89, 0x00, 0x03, 0x00, 0x00, 0xC6, 0x87, 0x20, 0x11, 0x00, 0x00, 0x00, 0x80, 0xBF, 0x21, 0x11, 0x00, 0x00, 0x00 };
+UHookRelativeIntermediate HookTargetLockOffset(
+    PATTERN_LOCKON_OFFSET,
+    10,
+    &TargetLockOffset,
+    0,
+    "HookTargetLockOffset"
+);
+
+std::vector<uint16_t> PATTERN_LOCKON_STATE = { 0x80, 0xBE, 0x30, 0x28, 0x00, 0x00, 0x00, 0x0F, 0x84, 0x51, 0x01, 0x00, 0x00, 0x48, 0x85, 0xFF, 0x0F, 0x84, 0x15, 0x01, 0x00, 0x00, 0x80, 0xBE, 0x8C, 0x29, 0x00, 0x00, 0x00 };
+UHookRelativeIntermediate HookTargetLockState(
+    PATTERN_LOCKON_STATE,
+    7,
+    &SetTargetLockState,
+    0,
+    "HookTargetLockState"
+);
+
 #endif // if USE_TEST_PATTERNS
 
 #pragma warning(suppress:4100) // unused param
@@ -786,6 +818,8 @@ DWORD WINAPI MainThread(LPVOID lpParam)
             HookStoreCameraMaxDistance,
             HookCameraOffset,
             HookCollisionEndOffset,
+            HookTargetLockOffset,
+            HookTargetLockState,
             //HookCollisionOffset,
         });
     }
