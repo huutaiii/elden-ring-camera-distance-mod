@@ -23,11 +23,14 @@ constexpr double PI = 3.14159265359;
 constexpr unsigned int JMP_SIZE = 14;
 constexpr bool AUTOENABLE = true;
 
-#define USE_HOTKEYS 0
+#ifndef USE_HOTKEYS
+    #define USE_HOTKEYS 0
+#endif
+
 #define USE_TEST_PATTERNS 1
 #define DISABLE_AUTO_ROTATION 0
-unsigned int PIVOT_INTERP_DELAY = 0;
-float PIVOT_INTERP_SPEED = 16.f;
+constexpr unsigned int PIVOT_INTERP_DELAY = 0;
+constexpr int LOCKON_STATE_DELAY = 2;
 
 HMODULE g_hModule;
 
@@ -60,6 +63,8 @@ extern "C"
 
     void TargetLockOffset();
     void SetTargetLockState();
+
+    uint64_t TalkAddress;
 }
 
 glm::vec4 vec_from__m128(__m128 m)
@@ -69,12 +74,17 @@ glm::vec4 vec_from__m128(__m128 m)
     return glm::vec4(v[3], v[2], v[1], v[0]);
 }
 
-inline __m128 GLMToXMM(glm::vec3 v)
+inline __m128 GLMtoXMM(glm::vec4 v)
 {
     return _mm_setr_ps(v.x, v.y, v.z, 0.f);
 }
 
-inline glm::vec4 XMMToGLM(__m128 m)
+inline __m128 GLMtoXMM(glm::vec3 v)
+{
+    return GLMtoXMM(glm::vec4(v, static_cast<decltype(v.r)>(0)));
+}
+
+inline glm::vec4 XMMtoGLM(__m128 m)
 {
     float v[4];
     _mm_storer_ps(v, m); // MSVC specific, keeps components in reverse order
@@ -97,7 +107,7 @@ template<typename T>
 inline T clamp(T x, T a = 0.0, T b = 1.0) { return min(b,max(a,x)); }
 
 template<typename Tv, typename Ta>
-inline Tv lerp(Tv x, Tv y, Ta a) { return x * ((Ta)1.0 - a) + y * a; }
+inline Tv lerp(Tv x, Tv y, Ta a) { a = clamp(a); return x * ((Ta)1.0 - a) + y * a; }
 
 template<typename T>
 inline T smoothstep(T edge0, T edge1, T x) {
@@ -105,8 +115,14 @@ inline T smoothstep(T edge0, T edge1, T x) {
     return x * x * (3 - 2 * x);
 }
 
+template<typename T>
+inline T oneminus(T x) { return T(1) - x; }
+
+template<typename T>
+inline T reciprocal(T x) { return T(1) / x; }
+
 template<typename T> T EaseInOutSine(T x) {
-    return -(cos(PI * x) - 1) / 2;
+    return T(-(cos(PI * x) - 1) / 2);
 }
 
 inline glm::vec3 V3InterpTo(glm::vec3 current, glm::vec3 target, float speed = 1, float deltaTime = 1.f/60.f, float minDistance = 0.001f)
@@ -128,8 +144,28 @@ inline glm::vec3 V3InterpTo(glm::vec3 current, glm::vec3 target, float speed = 1
     return current + vel;
 }
 
+template <typename T>
+inline T FInterpTo(T current, T target, T speed = 1.0, T deltaTime = 1.0 / 60, T minDistance = T(1) / 1000)
+{
+    if (speed <= 0.00001)
+    {
+        return target;
+    }
+
+    T delta = target - current;
+    if (delta <= minDistance)
+    {
+        return target;
+    }
+
+    T deltaInterp = delta * clamp(deltaTime * speed);
+    return current + deltaInterp;
+}
+
 glm::vec3 RelativeOffset;
 glm::vec3 LockedonOffset;
+float OffsetInterpSpeed;
+
 std::queue<__m128> RelativeOffsetBuffer;
 extern "C" __m128 OffsetInterp = _mm_setzero_ps();
 extern "C" __m128 CollisionOffset = _mm_setzero_ps();
@@ -137,9 +173,13 @@ extern "C" __m128 TargetOffset = _mm_setzero_ps();
 float OffsetScale = 0.f;
 
 glm::vec3 LastOffset = { 0, 0, 0 };
+//float LockonInterp;
+//float LockonInterpTime = 5.f;
 
 uintptr_t AutoRotationAddress;
 uintptr_t AutoRotationBytes;
+
+int LockonDelayedFrames = 0;
 
 extern "C"
 {
@@ -147,9 +187,9 @@ extern "C"
     __m128 pvResolvedOffset = _mm_setzero_ps();
     __m128 pvPivotPosition = _mm_setzero_ps();
     float fCamMaxDistance = 0.f;
-    uint32_t bHasTargetLock = 0;
+    char bHasTargetLock = 0;
     __m128 pvTargetPosition = _mm_setzero_ps();
-    
+
     void SetPivotYaw();
     void SetCameraCoords();
     void SetCameraMaxDistance();
@@ -203,25 +243,76 @@ extern "C"
 #endif
         return OffsetInterp;
     }
-
-    void CalcCameraOffset()
-    {
-        float offsetScale = RelativeOffsetAlpha(vec_from__m128(pvResolvedOffset), fCamMaxDistance);
-        glm::vec3 localOffset = bHasTargetLock ? LockedonOffset : RelativeOffset;
-
-        glm::mat4x4 rotation = glm::rotate(PivotYaw, glm::vec3(0.f, 1.f, 0.f));
-        glm::vec3 targetOffset = rotation * glm::vec4(localOffset, 0.f) * 1.f;
-        glm::vec3 offset = V3InterpTo(LastOffset, targetOffset, PIVOT_INTERP_SPEED);
-        float targetDistance = glm::length(glm::vec3(XMMToGLM(pvPivotPosition)) - glm::vec3(XMMToGLM(pvTargetPosition)));
-        float targetOffsetScale = log(targetDistance);
-        LastOffset = offset;
-        OffsetInterp = GLMToXMM(offset * max(offsetScale - 1.f / targetDistance, -1.f));
-        CollisionOffset = GLMToXMM(offset);
-        TargetOffset = GLMToXMM(offset * offsetScale * targetOffsetScale);
-        
-        //_mm_setr_ps(offset.x, offset.y, offset.z, 0.f);
-    }
 }
+
+// I have no idea why letting the compiler optimize this branch make the coords come out all wrong
+// It's not that I use the variable modified by the branch
+// It's just the fact that I modified the counter at all. wtf?
+#pragma optimize("", off)
+inline void SetLockonDelay()
+{
+    if (bHasTargetLock)
+    {
+        LockonDelayedFrames += 1;
+    }
+    else
+    {
+        LockonDelayedFrames = 0;
+    }
+    LockonDelayedFrames = min(LockonDelayedFrames, LOCKON_STATE_DELAY);
+}
+#pragma optimize("", on)
+
+#define TALKING_STATE_DELAY 5
+int CountTalking = 0;
+
+inline bool GetIsTalking()
+{
+    bool bIsTalking = TalkAddress ? **reinterpret_cast<uint64_t**>(TalkAddress + 0x28) == 1000 : false;
+    if (!bIsTalking)
+    {
+        // unset TalkAddress so the game won't crash on reload
+
+        if (CountTalking >= TALKING_STATE_DELAY)
+        {
+            TalkAddress = 0;
+            CountTalking = 0;
+        }
+        else
+        {
+            CountTalking += 1;
+        }
+    }
+    else
+    {
+        CountTalking = 0;
+    }
+    return bIsTalking;
+}
+
+extern "C" void CalcCameraOffset()
+{
+    // Delay some frames when switching offset values so the camera won't jiggle when we press R3 at nothing
+    SetLockonDelay();
+    bool bLockon = LockonDelayedFrames >= LOCKON_STATE_DELAY;
+    bool bAddOffset = !GetIsTalking();
+
+    float offsetScale = RelativeOffsetAlpha(vec_from__m128(pvResolvedOffset), fCamMaxDistance);
+    offsetScale *= offsetScale;
+    glm::vec3 localOffset = bLockon ? LockedonOffset : RelativeOffset;
+
+    glm::mat4x4 rotation = glm::rotate(PivotYaw, glm::vec3(0.f, 1.f, 0.f));
+    glm::vec3 offset = rotation * glm::vec4(localOffset, 0.f) * float(bAddOffset);
+    float targetDistance = bHasTargetLock ? glm::length(glm::vec3(XMMtoGLM(pvPivotPosition)) - glm::vec3(XMMtoGLM(pvTargetPosition))) : 0.f;
+
+    glm::vec3 offsetCam = offset * (targetDistance > 0.f ? (offsetScale - reciprocal(1 + targetDistance * targetDistance)) : offsetScale);
+    glm::vec3 offsetInterp = V3InterpTo(XMMtoGLM(OffsetInterp), offsetCam, OffsetInterpSpeed);
+
+    OffsetInterp = GLMtoXMM(offsetInterp);
+    CollisionOffset = GLMtoXMM(offset);
+    TargetOffset = GLMtoXMM(V3InterpTo(XMMtoGLM(TargetOffset), bHasTargetLock ? offset * log(targetDistance) : glm::vec3(0), OffsetInterpSpeed));
+}
+
 
 std::string GetDefaultConfig()
 {
@@ -280,41 +371,56 @@ void LoadConfig()
         ModUtils::Log("Reading config");
 
         float multiplier = reader.GetFloat("camera_distance", "multiplier", 1.f);
-        ModUtils::Log("using distance multiplier = %f", multiplier);
         CameraDistanceMul = _mm_set_ss(multiplier);
 
         float offset = reader.GetFloat("camera_distance", "flat_offset", 0.f);
-        ModUtils::Log("using offset = %f", offset);
         CameraDistanceAdd = _mm_set_ss(offset);
 
         ModConfig.bUseCameraDistance = multiplier != 1.f || offset != 0.f;
+        if (ModConfig.bUseCameraDistance)
+        {
+            ModUtils::Log("using distance multiplier = %f", multiplier);
+            ModUtils::Log("using offset = %f", offset);
+        }
 
         float fovmul = reader.GetFloat("fov", "multiplier", 1.0f);
-        ModUtils::Log("using fov multiplier = %f", fovmul);
         FoVMul = _mm_set_ss(fovmul);
 
         ModConfig.bUseFoV = fovmul != 1.f;
+        if (ModConfig.bUseFoV)
+        {
+            ModUtils::Log("using fov multiplier = %f", fovmul);
+        }
 
         float follow_speed_multiplier = reader.GetFloat("camera_interpolation", "follow_speed_multiplier", 1.f);
         float speed_mul_z = reader.GetFloat("camera_interpolation", "follow_speed_multiplier_z", 0.f);
-        ModUtils::Log("using follow_speed_multiplier = %f", follow_speed_multiplier);
-        ModUtils::Log("using follow_speed_multiplier_z = %f", speed_mul_z);
         InterpSpeedMul = _mm_set_ss(follow_speed_multiplier);
         vInterpSpeedMul = (speed_mul_z > 0.f) ? _mm_setr_ps(follow_speed_multiplier, speed_mul_z, follow_speed_multiplier, 0.f)
             : _mm_setr_ps(follow_speed_multiplier, follow_speed_multiplier, follow_speed_multiplier, 0.f);
 
         ModConfig.bUsePivotSpeed = follow_speed_multiplier != 1.f || speed_mul_z != 0.f;
+        if (ModConfig.bUsePivotSpeed)
+        {
+            ModUtils::Log("using follow_speed_multiplier = %f", follow_speed_multiplier);
+            ModUtils::Log("using follow_speed_multiplier_z = %f", speed_mul_z);
+        }
 
         std::vector<float> relative_offset_val = reader.GetVector<3, float>("camera_offset", "offset", std::vector<float>(3, 0.f));
         glm::vec3 relative_offset(relative_offset_val[0], relative_offset_val[1], relative_offset_val[2]);
-        ModUtils::Log("using relative_offset = %s", glm::to_string(relative_offset).c_str());
         RelativeOffset = relative_offset;
 
         std::vector<float> lockon_offset_val = reader.GetVector<3, float>("camera_offset", "lockon_offset", std::vector<float>(3, 0.f));
         LockedonOffset = glm::vec3(lockon_offset_val[0], lockon_offset_val[1], lockon_offset_val[2]);
-        ModUtils::Log("using lockon_offset = %s", glm::to_string(LockedonOffset).c_str());
+
+        OffsetInterpSpeed = reader.GetFloat("camera_offset", "offset_interpolation_speed", 3.f);
 
         ModConfig.bUseCameraOffset = glm::length(RelativeOffset) + glm::length(LockedonOffset) > 0.0001;
+        if (ModConfig.bUseCameraOffset)
+        {
+            ModUtils::Log("using relative_offset = %s", glm::to_string(relative_offset).c_str());
+            ModUtils::Log("using lockon_offset = %s", glm::to_string(LockedonOffset).c_str());
+            ModUtils::Log("using offset_interp_speed = %f", OffsetInterpSpeed);
+        }
     }
 }
 
@@ -756,10 +862,10 @@ void HookPivotOffsetEnable()
 
 void HookPivotOffsetDisable()
 {
-    if (HookOffsetInterp && HookOffsetInterpBytes)
+    /*if (HookOffsetInterp && HookOffsetInterpBytes)
     {
         ModUtils::MemCopy(HookOffsetInterp, uintptr_t(HookOffsetInterpBytes), 12);
-    }
+    }*/
 }
 
 std::vector<uint16_t> PATTERN_PIVOT_OFFSET({ 0x0F, 0x59, 0xA3, 0x90, 0x00, 0x00, 0x00, 0x0F, 0x58, 0xEC, 0x0F, 0x29, 0xAB, 0xC0, 0x00, 0x00, 0x00, 0x0F, 0x29, 0xAB, 0xD0, 0x00, 0x00, 0x00, 0x0F, 0x29, 0xAB, 0xE0, 0x00, 0x00, 0x00, 0x48, 0x8B, 0x4D, 0xE0, 0x48, 0x33, 0xCC });
@@ -833,6 +939,20 @@ UHookRelativeIntermediate HookTargetLockState(
     "HookTargetLockState"
 );
 
+extern "C" 
+{
+    void SetTalkAddress();
+}
+
+std::vector<uint16_t> PATTERN_TALK_ADDRESS = { 0x48, 0x85, 0xFF, 0x74, 0x2E, 0x48, 0x8B, 0xCF, 0xE8, 0x67, 0xFF, 0xE3, 0xFF, 0x48, 0x8B, 0xD8, 0x4C, 0x8B, 0x07, 0x33, 0xD2, 0x48, 0x8B, 0xCF, 0x41, 0xFF, 0x10, 0x4C, 0x8B, 0x03, 0x48, 0x8B, 0xD7, 0x48, 0x8B, 0xCB, 0x41, 0xFF, 0x50, 0x68 };
+UHookRelativeIntermediate HookStoreTalkAddress(
+    PATTERN_TALK_ADDRESS,
+    6,
+    &SetTalkAddress,
+    13,
+    "HookStoreTalkAddress"
+);
+
 #endif // if USE_TEST_PATTERNS
 
 #pragma warning(suppress:4100) // unused param
@@ -872,6 +992,7 @@ DWORD WINAPI MainThread(LPVOID lpParam)
             HookCollisionEndOffset,
             HookTargetLockOffset,
             HookTargetLockState,
+            HookStoreTalkAddress,
             //HookCollisionOffset,
         });
     }

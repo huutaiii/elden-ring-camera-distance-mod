@@ -61,5 +61,6 @@
     <Text Include="..\doc\disasm_misc.txt" />
     <Text Include="..\doc\disasm_offset.txt" />
     <Text Include="..\doc\disasm_lockon.txt" />
+    <Text Include="..\doc\disasm_talk.txt" />
   </ItemGroup>
 </Project>

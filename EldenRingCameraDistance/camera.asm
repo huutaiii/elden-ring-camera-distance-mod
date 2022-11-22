@@ -13,7 +13,8 @@ extern pvPivotPosition : xmmword
 extern pvTargetPosition : xmmword
 extern pvResolvedOffset : xmmword
 extern fCamMaxDistance : dword
-extern bHasTargetLock : dword
+extern bHasTargetLock : byte
+extern TalkAddress : qword
 
 ; in
 extern OffsetInterp : xmmword
@@ -119,14 +120,13 @@ extern TargetOffset : xmmword
 	SetCameraMaxDistance endp
 
 	SetTargetLockState proc
-		je lock_f
-	lock_t:
-		mov dword ptr [bHasTargetLock],1
-		jmp lock_ret
-	lock_f:
-		mov dword ptr [bHasTargetLock],0
-	lock_ret:
+		setne [bHasTargetLock]
 		ret
 	SetTargetLockState endp
+
+	SetTalkAddress proc
+		mov [TalkAddress],rsi
+		ret
+	SetTalkAddress endp
 
 end
