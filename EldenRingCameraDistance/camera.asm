@@ -59,9 +59,25 @@ extern TargetOffset : xmmword
 		lea rsp,[rsp-20h]
 		movdqa [rbp-10h],xmm0
 		movdqa [rbp-20h],xmm1
+		push rax
+		push rbx
+		push rcx
+		push rdx
+		push r8
+		push r9
+		push r10
+		push r11
 
 		call CalcCameraOffset
 
+		pop r11
+		pop r10
+		pop r9
+		pop r8
+		pop rdx
+		pop rcx
+		pop rbx
+		pop rax
 		movdqa xmm0,[rbp-10h]
 		movdqa xmm1,[rbp-20h]
 

@@ -245,10 +245,6 @@ extern "C"
     }
 }
 
-// I have no idea why letting the compiler optimize this branch make the coords come out all wrong
-// It's not that I use the variable modified by the branch
-// It's just the fact that I modified the counter at all. wtf?
-#pragma optimize("", off)
 inline void SetLockonDelay()
 {
     if (bHasTargetLock)
@@ -261,7 +257,6 @@ inline void SetLockonDelay()
     }
     LockonDelayedFrames = min(LockonDelayedFrames, LOCKON_STATE_DELAY);
 }
-#pragma optimize("", on)
 
 #define TALKING_STATE_DELAY 5
 int CountTalking = 0;
