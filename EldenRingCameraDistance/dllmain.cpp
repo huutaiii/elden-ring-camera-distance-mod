@@ -8,6 +8,7 @@
 #include <xmmintrin.h>
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 constexpr unsigned int JMP_SIZE = 14;
 
@@ -18,8 +19,9 @@ extern "C"
     uintptr_t ReturnAddress;
     void CameraDistance();
     void CameraDistanceAlt();
-    __m128 CameraDistanceMul;
-    __m128 CameraDistanceAdd;
+    float CameraDistanceMul;
+    float CameraDistanceAdd;
+    float CameraDistanceAddCtrl = 0.f;
 
     void ModifyFoV();
     __m128 FoVMul;
@@ -38,6 +40,17 @@ extern "C"
 }
 
 constexpr bool USE_CAM_INTERP_ALT = true;
+
+struct {
+    int toggle;
+    int increase;
+    int decrease;
+    int reset;
+} KeyConfig;
+
+float DistanceCtrlDelta;
+float DistanceCtrlMin;
+float DistanceCtrlMax;
 
 std::string GetDefaultConfig()
 {
@@ -90,11 +103,11 @@ void LoadConfig()
 
         float multiplier = reader.GetFloat("camera_distance", "multiplier", 1.f);
         ModUtils::Log("using distance multiplier = %f", multiplier);
-        CameraDistanceMul = _mm_set_ss(multiplier);
+        CameraDistanceMul = (multiplier);
 
         float offset = reader.GetFloat("camera_distance", "flat_offset", 0.f);
         ModUtils::Log("using offset = %f", offset);
-        CameraDistanceAdd = _mm_set_ss(offset);
+        CameraDistanceAdd = (offset);
 
         float fovmul = reader.GetFloat("fov", "multiplier", 1.0f);
         ModUtils::Log("using fov multiplier = %f", fovmul);
@@ -107,6 +120,15 @@ void LoadConfig()
         InterpSpeedMul = _mm_set_ss(follow_speed_multiplier);
         vInterpSpeedMul = (speed_mul_z > 0.f) ? _mm_setr_ps(follow_speed_multiplier, speed_mul_z, follow_speed_multiplier, 0.f)
             : _mm_setr_ps(follow_speed_multiplier, follow_speed_multiplier, follow_speed_multiplier, 0.f);
+
+        DistanceCtrlDelta = reader.GetFloat("camera_distance", "control_delta", 0.f);
+        DistanceCtrlMin = reader.GetFloat("camera_distance", "control_min", -100.f);
+        DistanceCtrlMax = reader.GetFloat("camera_distance", "control_max", 100.f);
+
+        KeyConfig.toggle = reader.GetInteger("keybind", "distance_toggle", 0);
+        KeyConfig.increase = reader.GetInteger("keybind", "distance_increase", 0);
+        KeyConfig.decrease = reader.GetInteger("keybind", "distance_decrease", 0);
+        KeyConfig.reset = reader.GetInteger("keybind", "distance_reset", 0);
     }
 }
 
@@ -390,12 +412,25 @@ public:
         *static_cast<uint8_t*>(lpHook) = op;
         uint32_t relOffset = static_cast<uint32_t>(static_cast<uint8_t*>(lpIntermediate) - static_cast<uint8_t*>(lpHook) - opSize);
         *reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(lpHook) + 1) = relOffset;
+        bEnabled = true;
     }
     void Disable()
     {
         if (!bEnabled) { return; }
         ModUtils::Log("Disabling hook '%s' from %p to %p", msg.c_str(), lpHook, lpDestination);
         ModUtils::MemCopy(uintptr_t(lpHook), uintptr_t(lpIntermediate) + rspUp.size(), numBytes);
+        bEnabled = false;
+    }
+    void Toggle()
+    {
+        if (bEnabled)
+        {
+            Disable();
+        }
+        else
+        {
+            Enable();
+        }
     }
     ~UHookRelativeIntermediate() { Disable(); }
 };
@@ -466,6 +501,35 @@ DWORD WINAPI MainThread(LPVOID lpParam)
     HookCameraDistance.Enable();
     HookPivotInterp.Enable();
     HookFoVMul.Enable();
+
+    int counter = 0;
+
+    while (true)
+    {
+        //printf("checking hotkey %d", counter);
+        if (KeyConfig.toggle && ModUtils::CheckHotkey(KeyConfig.toggle))
+        {
+            HookCameraDistance.Toggle();
+        }
+        if (KeyConfig.increase && ModUtils::CheckHotkey(KeyConfig.increase))
+        {
+            CameraDistanceAddCtrl += DistanceCtrlDelta;
+        }
+        if (KeyConfig.decrease && ModUtils::CheckHotkey(KeyConfig.decrease))
+        {
+            CameraDistanceAddCtrl -= DistanceCtrlDelta;
+        }
+        if (KeyConfig.reset && ModUtils::CheckHotkey(KeyConfig.reset))
+        {
+            CameraDistanceAddCtrl = 0.f;
+        }
+        CameraDistanceAddCtrl = min(CameraDistanceAddCtrl, DistanceCtrlMax);
+        CameraDistanceAddCtrl = max(CameraDistanceAddCtrl, DistanceCtrlMin);
+
+        {
+            Sleep(8);
+        }
+    }
 
     //HookCameraDistance();
 

@@ -3,6 +3,7 @@
 	extern ReturnAddress : qword
 	extern CameraDistanceMul : dword
 	extern CameraDistanceAdd : dword
+	extern CameraDistanceAddCtrl : dword
 
 	extern FoVMul : dword
 
@@ -23,6 +24,7 @@
 	CameraDistanceAlt proc
 		mulss xmm7, [CameraDistanceMul]
 		addss xmm7, [CameraDistanceAdd]
+		addss xmm7, [CameraDistanceAddCtrl]
 
 		ret
 	CameraDistanceAlt endp
