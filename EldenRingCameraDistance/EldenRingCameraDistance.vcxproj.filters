@@ -40,10 +40,16 @@
     <MASM Include="pivot.asm">
       <Filter>Source Files</Filter>
     </MASM>
+    <MASM Include="misc.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />
     <None Include="..\doc\config.ini">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\doc\config_testing.ini">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

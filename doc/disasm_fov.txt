@@ -61,7 +61,7 @@ eldenring.exe.text+3B388F - 48 8D 4C 24 20        - lea rcx,[rsp+20]
 eldenring.exe.text+3B3894 - 89 83 D0010000        - mov [rbx+000001D0],eax
 eldenring.exe.text+3B389A - 89 93 60040000        - mov [rbx+00000460],edx
 eldenring.exe.text+3B38A0 - 48 C7 44 24 20 00000000 - mov qword ptr [rsp+20],00000000
-eldenring.exe.text+3B38A9 - 89 54 24 28           - mov [rsp+28],edx
+eldenring.exe.text+3B38A9 - 89 54 24 28           - mov [rsp+28],edx					; edx = param id
 eldenring.exe.text+3B38AD - E8 1EC09000           - call eldenring.exe.text+CBF8D0
 eldenring.exe.text+3B38B2 - 48 8D 4C 24 20        - lea rcx,[rsp+20]
 eldenring.exe.text+3B38B7 - E8 84C19000           - call eldenring.exe.text+CBFA40

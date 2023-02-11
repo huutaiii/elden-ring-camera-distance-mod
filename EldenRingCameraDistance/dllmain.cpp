@@ -14,12 +14,14 @@
 
 #include <ModUtils.h>
 #include <INIReader.h>
-#include <glm/matrix.hpp>
+#define GLM_FORCE_SWIZZLE
+#include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <glm/gtx/vector_angle.hpp>
 #pragma warning(pop)
 
-constexpr double PI = 3.14159265359;
+constexpr float PI = 3.14159265359f;
 constexpr unsigned int JMP_SIZE = 14;
 constexpr bool AUTOENABLE = true;
 
@@ -27,10 +29,10 @@ constexpr bool AUTOENABLE = true;
     #define USE_HOTKEYS 0
 #endif
 
-#define USE_TEST_PATTERNS 1
+#define USE_TESTING_PATTERNS 1
 #define DISABLE_AUTO_ROTATION 0
 constexpr unsigned int PIVOT_INTERP_DELAY = 0;
-constexpr int LOCKON_STATE_DELAY = 2;
+constexpr int LOCKON_STATE_DELAY = 3;
 
 HMODULE g_hModule;
 
@@ -65,7 +67,14 @@ extern "C"
     void SetTargetLockState();
 
     uint64_t TalkAddress;
+
+    uint32_t CamParamID;
+    void SetParamID();
+
+    void GetDeltaTime();
 }
+
+extern "C" float DeltaTime = 1.0 / 60;
 
 glm::vec4 vec_from__m128(__m128 m)
 {
@@ -104,7 +113,10 @@ inline T max(T a, T b) { return a > b ? a : b; }
 
 // Clamps x to range [a..b]
 template<typename T>
-inline T clamp(T x, T a = 0.0, T b = 1.0) { return min(b,max(a,x)); }
+inline T clamp(T x, T a, T b) { return min(b,max(a,x)); }
+
+template<typename T>
+inline T saturate(T x) { return clamp(x, T(0), T(1)); }
 
 template<typename Tv, typename Ta>
 inline Tv lerp(Tv x, Tv y, Ta a) { a = clamp(a); return x * ((Ta)1.0 - a) + y * a; }
@@ -113,6 +125,15 @@ template<typename T>
 inline T smoothstep(T edge0, T edge1, T x) {
     x = clamp((x - edge0) / (edge1 - edge0), (T)0, (T)1);
     return x * x * (3 - 2 * x);
+}
+
+template<typename T>
+inline T maprange(T x, T in_min, T in_max, T out_min, T out_max) { return out_min + (x - in_min) / (in_max - in_min) * (out_max - out_min); }
+
+template<typename T>
+inline T mapclamped(T x, T in_min, T in_max, T out_min, T out_max)
+{
+    return out_min < out_max ? clamp(maprange(x, in_min, in_max, out_min, out_max)) : clamp(maprange(x, in_min, in_max, out_max, out_min));
 }
 
 template<typename T>
@@ -125,7 +146,7 @@ template<typename T> T EaseInOutSine(T x) {
     return T(-(cos(PI * x) - 1) / 2);
 }
 
-inline glm::vec3 V3InterpTo(glm::vec3 current, glm::vec3 target, float speed = 1, float deltaTime = 1.f/60.f, float minDistance = 0.001f)
+inline glm::vec3 InterpToV3(glm::vec3 current, glm::vec3 target, float speed = 1, float deltaTime = DeltaTime, float minDistance = 0.0001f)
 {
     if (speed <= 0.f)
     {
@@ -145,7 +166,7 @@ inline glm::vec3 V3InterpTo(glm::vec3 current, glm::vec3 target, float speed = 1
 }
 
 template <typename T>
-inline T FInterpTo(T current, T target, T speed = 1.0, T deltaTime = 1.0 / 60, T minDistance = T(1) / 1000)
+inline T InterpToF(T current, T target, double speed = 1.0, double deltaTime = DeltaTime, double minDistance = 1.0 / 10000)
 {
     if (speed <= 0.00001)
     {
@@ -153,26 +174,51 @@ inline T FInterpTo(T current, T target, T speed = 1.0, T deltaTime = 1.0 / 60, T
     }
 
     T delta = target - current;
-    if (delta <= minDistance)
+    if (abs(delta) <= minDistance)
     {
         return target;
     }
 
-    T deltaInterp = delta * clamp(deltaTime * speed);
+    T deltaInterp = T(delta * saturate(deltaTime * speed));
     return current + deltaInterp;
+}
+
+template <typename T>
+inline T InterpToFConstant(T current, T target, double speed = 1.0, double deltaTime = DeltaTime, double minDistance = 1.0 / 10000)
+{
+    if (speed <= 0.00001)
+    {
+        return target;
+    }
+
+    T delta = target - current;
+    if (abs(delta) <= minDistance)
+    {
+        return target;
+    }
+
+    return delta >= 0.f ? clamp(T(current + deltaTime * speed), current, target) : clamp(T(current - deltaTime * speed), target, current);
 }
 
 glm::vec3 RelativeOffset;
 glm::vec3 LockedonOffset;
 float OffsetInterpSpeed;
 
-std::queue<__m128> RelativeOffsetBuffer;
+extern "C" void SetSideSwitch();
+extern "C" float SideSwitchDelta = 0.f;
+extern "C" float SideSwitchMax = 0.f;
+/*extern "C" */float SideSwitchSpeed = 3.f;
+/*extern "C" */float SideSwitch = 1.f;
+float SideSwitchInterp = 0.f;
+float SideSwitchThreshold = 1.5;
+
+//std::queue<__m128> RelativeOffsetBuffer;
 extern "C" __m128 OffsetInterp = _mm_setzero_ps();
 extern "C" __m128 CollisionOffset = _mm_setzero_ps();
 extern "C" __m128 TargetOffset = _mm_setzero_ps();
-float OffsetScale = 0.f;
+//float OffsetScale = 0.f;
 
-glm::vec3 LastOffset = { 0, 0, 0 };
+//glm::vec3 LastOffset = { 0, 0, 0 };
 //float LockonInterp;
 //float LockonInterpTime = 5.f;
 
@@ -186,6 +232,7 @@ extern "C"
     float PivotYaw = 0.f;
     __m128 pvResolvedOffset = _mm_setzero_ps();
     __m128 pvPivotPosition = _mm_setzero_ps();
+    __m128 pvPivotPositionNoInterp = _mm_setzero_ps();
     float fCamMaxDistance = 0.f;
     char bHasTargetLock = 0;
     __m128 pvTargetPosition = _mm_setzero_ps();
@@ -208,7 +255,7 @@ extern "C"
         OffsetScale += distance;
         glm::vec4 vOffset = rotation * glm::vec4(RelativeOffset, 0.f) * OffsetScale;
 
-        glm::vec3 vOffsetInterp = V3InterpTo(vec_from__m128(OffsetInterp), vOffset, PIVOT_INTERP_SPEED);
+        glm::vec3 vOffsetInterp = InterpToV3(vec_from__m128(OffsetInterp), vOffset, PIVOT_INTERP_SPEED);
         __m128 offset = _mm_setr_ps(vOffsetInterp.x, vOffsetInterp.y, vOffsetInterp.z, 0.f);
 
         /*if (distance > 0.0)
@@ -245,6 +292,79 @@ extern "C"
     }
 }
 
+float DeltaAnglePivot2Target;
+
+glm::vec3 PivotSpaceTargetPos;
+float TargetXInterp;
+const float SideSwitchDelay = 0.f;
+float SideSwitchElapsed = 0.f;
+inline void CalcSideSwitch(bool bLockon)
+{
+    static bool bLockonPrevious = false;
+    bool bLockonStateChanged = bLockonPrevious != bLockon;
+    bLockonPrevious = bLockon;
+
+    if (bLockonStateChanged)
+    {
+        DeltaAnglePivot2Target = 0.f;
+
+        if (bLockon)
+        {
+            PivotSpaceTargetPos = glm::inverse(glm::translate(glm::vec3(XMMtoGLM(pvPivotPosition))) * glm::rotate(PivotYaw, glm::vec3(0, 1, 0))) * glm::vec4(XMMtoGLM(pvTargetPosition).xyz, 1);
+            
+            glm::vec3 vCamForward = glm::rotate(PivotYaw, glm::vec3(0.f, 1.f, 0.f)) * glm::vec4(0.f, 0.f, 1.f, 0.f);
+            glm::vec3 Pivot2Target = XMMtoGLM(pvTargetPosition) - XMMtoGLM(pvPivotPosition);
+            Pivot2Target.y = 0.f;
+            Pivot2Target = glm::normalize(Pivot2Target);
+            //SideSwitch = glm::orientedAngle(vCamForward, Pivot2Target, glm::vec3(0, 1, 0)) > 0 ? 1.f : -1.f;
+            SideSwitch = PivotSpaceTargetPos.x > -XMMtoGLM(OffsetInterp).x ? 1.f : -1.f;
+            //SideSwitch = 0.f;
+            SideSwitchInterp = SideSwitch;
+            SideSwitchElapsed = 0.f;
+        }
+        else
+        {
+            SideSwitch = 1.f;
+            PivotSpaceTargetPos = glm::vec3();
+            TargetXInterp = 0.f;
+        }
+    }
+
+    if (bLockon)
+    {
+        PivotSpaceTargetPos = glm::inverse(glm::translate(glm::vec3(XMMtoGLM(pvPivotPositionNoInterp))) * glm::rotate(PivotYaw, glm::vec3(0, 1, 0))) * glm::vec4(XMMtoGLM(pvTargetPosition).xyz - XMMtoGLM(TargetOffset).xyz, 1);
+
+        if (SideSwitchElapsed < SideSwitchDelay)
+        {
+            SideSwitchElapsed = min(SideSwitchElapsed + DeltaTime, SideSwitchDelay);
+        }
+        else
+        {
+            TargetXInterp = InterpToF(TargetXInterp + PivotSpaceTargetPos.x, 0.f, 10);
+            //if (abs(TargetXInterp) > SideSwitchThreshold)
+            {
+                SideSwitch = clamp(SideSwitch + PivotSpaceTargetPos.x, -1.f, 1.f);
+                SideSwitch = InterpToF(SideSwitch, SideSwitch >= 0.f ? 1.f : -1.f, smoothstep(0.2f, 0.0f, abs(PivotSpaceTargetPos.x)) * 50.f);
+                //TargetXInterp = 0.f;
+                SideSwitchElapsed = 0.f;
+            }
+        }
+        //SideSwitchInterp = InterpToFConstant(SideSwitchInterp, SideSwitch, 2.f * OffsetInterpSpeed / SideSwitchDelay, DeltaTime);
+    }
+    else
+    {
+        SideSwitchInterp = 1.f;
+    }
+
+    //if (!bLockon)
+    //{
+    //    SideSwitch = 1.f;
+    //    return;
+    //}
+    //SideSwitch = clamp(SideSwitchDelta / SideSwitchMax, -1.f, 1.f);
+    ////SideSwitch = InterpToF(SideSwitch, clamp(SideSwitchDelta / SideSwitchMax, -1.f, 1.f), 1);
+}
+
 inline void SetLockonDelay()
 {
     if (bHasTargetLock)
@@ -258,16 +378,18 @@ inline void SetLockonDelay()
     LockonDelayedFrames = min(LockonDelayedFrames, LOCKON_STATE_DELAY);
 }
 
-#define TALKING_STATE_DELAY 5
+#define TALKING_STATE_DELAY 2
 int CountTalking = 0;
 
 inline bool GetIsTalking()
 {
+    //return CamParamID == 1000000; // Some NPCs don't trigger the zoom-in which this can't detect
+
     bool bIsTalking = TalkAddress ? **reinterpret_cast<uint64_t**>(TalkAddress + 0x28) == 1000 : false;
-    if (!bIsTalking)
+    if (!bIsTalking && TalkAddress)
     {
         // unset TalkAddress so the game won't crash on reload
-
+    
         if (CountTalking >= TALKING_STATE_DELAY)
         {
             TalkAddress = 0;
@@ -287,30 +409,39 @@ inline bool GetIsTalking()
 
 extern "C" void CalcCameraOffset()
 {
+
     // Delay some frames when switching offset values so the camera won't jiggle when we press R3 at nothing
     SetLockonDelay();
     bool bLockon = LockonDelayedFrames >= LOCKON_STATE_DELAY;
-    bool bAddOffset = !GetIsTalking();
+
+    CalcSideSwitch(bLockon);
+
+    bool bIsResting = CamParamID == 1001000;
+    bool bAddOffset = !GetIsTalking() && !bIsResting;
 
     float offsetScale = RelativeOffsetAlpha(vec_from__m128(pvResolvedOffset), fCamMaxDistance);
     offsetScale *= offsetScale;
     glm::vec3 localOffset = bLockon ? LockedonOffset : RelativeOffset;
 
     glm::mat4x4 rotation = glm::rotate(PivotYaw, glm::vec3(0.f, 1.f, 0.f));
-    glm::vec3 offset = rotation * glm::vec4(localOffset, 0.f) * float(bAddOffset);
-    float targetDistance = bHasTargetLock ? glm::length(glm::vec3(XMMtoGLM(pvPivotPosition)) - glm::vec3(XMMtoGLM(pvTargetPosition))) : 0.f;
+    glm::vec3 offset = localOffset * float(bAddOffset) * SideSwitch;
+    offset += bIsResting ? glm::vec3(-0.60f, 0, 0) : glm::vec3();
+    offset = rotation * glm::vec4(offset, 0);
+    float targetDistance = bHasTargetLock ? glm::length((glm::vec3(XMMtoGLM(pvPivotPosition)) - glm::vec3(XMMtoGLM(pvTargetPosition))) * glm::vec3(1, 0, 1)) : 0.f;
 
     glm::vec3 offsetCam = offset * (targetDistance > 0.f ? (offsetScale - reciprocal(1 + targetDistance * targetDistance)) : offsetScale);
-    glm::vec3 offsetInterp = V3InterpTo(XMMtoGLM(OffsetInterp), offsetCam, OffsetInterpSpeed);
+    glm::vec3 offsetInterp = InterpToV3(XMMtoGLM(OffsetInterp), offsetCam, OffsetInterpSpeed);
 
     OffsetInterp = GLMtoXMM(offsetInterp);
     CollisionOffset = GLMtoXMM(offset);
-    TargetOffset = GLMtoXMM(V3InterpTo(XMMtoGLM(TargetOffset), bHasTargetLock ? offset * log(targetDistance) : glm::vec3(0), OffsetInterpSpeed));
+    TargetOffset = GLMtoXMM(InterpToV3(XMMtoGLM(TargetOffset), bHasTargetLock ? offsetInterp * (targetDistance > 1.f ? log(targetDistance) + 1.f : targetDistance) : glm::vec3(0), 0 * OffsetInterpSpeed));
 }
 
 
-std::string GetDefaultConfig()
+std::string GetDefaultConfig(bool bIncludeTesting = false)
 {
+    std::string configstr;
+
     HMODULE handle = g_hModule;
     HRSRC rs = ::FindResourceW(handle, MAKEINTRESOURCE(IDR_CONFIGFILE), MAKEINTRESOURCE(TEXTFILE));
     if (rs)
@@ -320,10 +451,26 @@ std::string GetDefaultConfig()
         if (rsData)
         {
             const char* data = static_cast<const char*>(::LockResource(rsData));
-            return std::string(data, size);
+            configstr += std::string(data, size);
         }
     }
-    return std::string();
+#if USE_TESTING_PATTERNS
+    if (bIncludeTesting)
+    {
+        rs = FindResourceW(handle, MAKEINTRESOURCE(IDR_CONFIGFILETESTING), MAKEINTRESOURCE(TEXTFILE));
+        if (rs)
+        {
+            HGLOBAL rsData = LoadResource(handle, rs);
+            size_t size = SizeofResource(handle, rs);
+            if (rsData)
+            {
+                const char* data = static_cast<const char*>(LockResource(rsData));
+                configstr += std::string(data, size);
+            }
+        }
+    }
+#endif
+    return configstr;
 }
 
 struct SModConfig {
@@ -331,6 +478,8 @@ struct SModConfig {
     bool bUsePivotSpeed = false;
     bool bUseFoV = false;
     bool bUseCameraOffset = false;
+    bool bDisableWobble = false;
+    bool bDisableAimTolerance = false;
 } ModConfig;
 
 void LoadConfig()
@@ -342,7 +491,7 @@ void LoadConfig()
         std::ofstream file;
         file.open(ModUtils::GetModuleFolderPath() + "\\config_default.ini");
         file << ";don't edit this file, it's here just to show the default configuration" << std::endl;
-        file << GetDefaultConfig();
+        file << GetDefaultConfig(true);
         file.close();
     }
 
@@ -416,6 +565,14 @@ void LoadConfig()
             ModUtils::Log("using lockon_offset = %s", glm::to_string(LockedonOffset).c_str());
             ModUtils::Log("using offset_interp_speed = %f", OffsetInterpSpeed);
         }
+
+        ModConfig.bDisableWobble = reader.GetBoolean("misc", "disable_camera_wobble", false);
+        if (ModConfig.bDisableWobble)
+        {
+            ModUtils::Log("disabling camera wobble");
+        }
+
+        ModConfig.bDisableAimTolerance = ModConfig.bUseCameraOffset && reader.GetBoolean("camera_offset", "disable_lockon_aim_tolerance", false);
     }
 }
 
@@ -632,12 +789,13 @@ public:
     };
 
 private:
+    MVirtualAlloc& allocator = MVirtualAlloc::Get();
 
     LPVOID lpHook = nullptr;
     LPVOID lpIntermediate = nullptr;
-    LPVOID lpDestination = nullptr;
-    size_t numBytes = 5;
-    MVirtualAlloc& allocator = MVirtualAlloc::Get();
+    LPVOID lpDestination;
+    size_t numBytes;
+    bool bExecuteOriginal;
 
     bool bCanHook = false;
     bool bEnabled = false;
@@ -646,6 +804,9 @@ private:
     // Initialize the intermediate code that we can decide to jump to later
     void Init()
     {
+        // we still need to store the stolen code somewhere even when we don't want to execute it
+
+        size_t JumpOffset = numBytes + rspUp.size() + rspDown.size();
         lpIntermediate = allocator.Alloc(numBytes + 14 + rspUp.size() + rspDown.size()); // one 14B jump, two 3B adds
 
         // move stack pointer up so stolen instructions can access the stack
@@ -658,11 +819,18 @@ private:
         ModUtils::MemCopy(uintptr_t(lpIntermediate) + rspUp.size() + numBytes, uintptr_t(rspDown.data()), rspDown.size());
 
         // create jump from intermediate code to custom code
-        upJmpAbs = std::make_unique<UHookAbsoluteNoCopy>(lpIntermediate, lpDestination, rspUp.size() + numBytes + rspDown.size());
+        upJmpAbs = std::make_unique<UHookAbsoluteNoCopy>(lpIntermediate, lpDestination, JumpOffset);
         upJmpAbs->Enable();
 
         ModUtils::Log("Generated hook '%s' from %p to %p at %p", msg.c_str(), lpHook, lpDestination, lpIntermediate);
     }
+
+private:
+    inline void UHookRelativeIntermediate_Internal(std::vector<uint16_t> pattern, int offset)
+    {
+        lpHook = reinterpret_cast<LPVOID>(ModUtils::SigScan(pattern, false, msg, true) + offset);
+        bCanHook = lpHook != nullptr;
+    };
 
 public:
     const std::string msg;
@@ -673,6 +841,7 @@ public:
     //{
     //    Init();
     //}
+
     UHookRelativeIntermediate(
         std::vector<uint16_t> signature,
         size_t numStolenBytes,
@@ -680,13 +849,28 @@ public:
         int offset = 0,
         std::string msg = "Unknown Hook",
         std::function<void()> enable = []() {},
-        std::function<void()> disable = []() {}
+        std::function<void()> disable = []() {},
+        bool bExecuteOriginal = true
     )
-        : numBytes(numStolenBytes), lpDestination(destination), msg(msg), fnEnable(enable), fnDisable(disable)
+        : numBytes(numStolenBytes), lpDestination(destination), msg(msg), fnEnable(enable), fnDisable(disable), bExecuteOriginal(bExecuteOriginal)
     {
-        lpHook = reinterpret_cast<LPVOID>(ModUtils::SigScan(signature, false, msg, true) + offset);
-        bCanHook = lpHook != nullptr;
-        //Init();
+        //lpHook = reinterpret_cast<LPVOID>(ModUtils::SigScan(signature, false, msg, true) + offset);
+        //bCanHook = lpHook != nullptr;
+        ////Init();
+        UHookRelativeIntermediate_Internal(signature, offset);
+    }
+
+    UHookRelativeIntermediate(
+        std::vector<uint16_t> signature,
+        size_t numStolenBytes,
+        LPVOID destination,
+        bool bExecuteOriginal,
+        int offset = 0,
+        std::string msg = "Unknown Hook"
+    )
+        : numBytes(numStolenBytes), lpDestination(destination), msg(msg), fnEnable([]() {}), fnDisable([]() {}), bExecuteOriginal(bExecuteOriginal)
+    {
+        UHookRelativeIntermediate_Internal(signature, offset);
     }
 
     const bool HasFoundSignature() const { return bCanHook; }
@@ -713,6 +897,8 @@ public:
         // write instruction at hook address
         *static_cast<uint8_t*>(lpHook) = op;
         uint32_t relOffset = static_cast<uint32_t>(static_cast<uint8_t*>(lpIntermediate) - static_cast<uint8_t*>(lpHook) - opSize);
+        relOffset += uint32_t(bExecuteOriginal ? 0 : (numBytes + rspUp.size() + rspDown.size()));
+
         *reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(lpHook) + 1) = relOffset;
         
         fnEnable();
@@ -789,7 +975,7 @@ UHookRelativeIntermediate HookFoVMul(
     "HookFoVMul"
 );
 
-#if USE_TEST_PATTERNS
+#if USE_TESTING_PATTERNS
 
 std::vector<uint16_t> PATTERN_CAMERA_YAW = { 0xF3, 0x0F, 0x10, 0x8E, 0x50, 0x01, 0x00, 0x00, 0x48, 0x8D, 0x8C, 0x24, 0x90, 0x00, 0x00, 0x00, 0x48, 0x8B, 0xF8, 0xE8, 0x9E, 0xC3, 0xFF, 0xFF, 0x48, 0x8D, 0x8C, 0x24, 0xD0, 0x00, 0x00, 0x00 };
 UHookRelativeIntermediate HookStorePivotRotation(
@@ -948,7 +1134,16 @@ UHookRelativeIntermediate HookStoreTalkAddress(
     "HookStoreTalkAddress"
 );
 
-#endif // if USE_TEST_PATTERNS
+std::vector<uint16_t> PATTERN_PARAM_ID = { 0x48, 0xC7, 0x44, 0x24, 0x20, 0x00, 0x00, 0x00, 0x00, 0x89, 0x54, 0x24, 0x28, 0xE8, 0x1E, 0xC0, 0x90, 0x00, 0x48, 0x8D, 0x4C, 0x24, 0x20, 0xE8, 0x84, 0xC1, 0x90, 0x00 };
+UHookRelativeIntermediate HookParamID(
+    PATTERN_PARAM_ID,
+    9,
+    &SetParamID,
+    0,
+    "HookParamID"
+);
+
+#endif // if USE_TESTING_PATTERNS
 
 #pragma warning(suppress:4100) // unused param
 DWORD WINAPI MainThread(LPVOID lpParam)
@@ -976,7 +1171,24 @@ DWORD WINAPI MainThread(LPVOID lpParam)
     addHookIf(HookPivotInterp, ModConfig.bUsePivotSpeed);
     addHookIf(HookFoVMul, ModConfig.bUseFoV);
 
-#if USE_TEST_PATTERNS
+    {
+        //eldenring.exe.text + D89AD0 - F3 0F10 05 58CB4402 - movss xmm0, [eldenring.exe.rdata + 8D8630]
+        //eldenring.exe.text + D89AD8 - F3 0F11 49 04       - movss[rcx + 04], xmm1                         ; replace this
+        //eldenring.exe.text + D89ADD - F3 0F58 09          - addss xmm1, [rcx]
+        //eldenring.exe.text + D89AE1 - 0F2F C8             - comiss xmm1, xmm0
+        //eldenring.exe.text + D89AE4 - F3 0F11 09          - movss[rcx], xmm1
+        std::vector<uint16_t> pattern = { 0xF3, 0x0F, 0x10, 0x05, 0x58, 0xCB, 0x44, 0x02, 0xF3, 0x0F, 0x11, 0x49, 0x04, 0xF3, 0x0F, 0x58, 0x09, 0x0F, 0x2F, 0xC8, 0xF3, 0x0F, 0x11, 0x09 };
+        static UHookRelativeIntermediate hook(
+            pattern,
+            5,
+            &GetDeltaTime,
+            8,
+            "HookDeltaTime"
+        );
+        hooks.push_back(hook);
+    }
+
+#if USE_TESTING_PATTERNS
     if (ModConfig.bUseCameraOffset)
     {
         hooks.insert(hooks.end(), {
@@ -988,9 +1200,61 @@ DWORD WINAPI MainThread(LPVOID lpParam)
             HookTargetLockOffset,
             HookTargetLockState,
             HookStoreTalkAddress,
+            HookParamID,
             //HookCollisionOffset,
         });
     }
+
+    if (ModConfig.bDisableWobble)
+    {
+        uintptr_t WobbleAddress = ModUtils::SigScan({ 0xF3, 0x0F, 0x11, 0x81, 0x44, 0x01, 0x00, 0x00, 0x76, 0x06, 0x89, 0xB9, 0x44, 0x01, 0x00, 0x00, 0x0F, 0x2F, 0xB9, 0x44, 0x01, 0x00, 0x00, 0x72, 0x2B, 0xF3, 0x0F, 0x10, 0x89, 0x40, 0x01, 0x00, 0x00 });
+        if (WobbleAddress)
+        {
+            ModUtils::MemSet(WobbleAddress, 0x90, 8);
+        }
+    }
+
+    if (ModConfig.bDisableAimTolerance)
+    {
+        /*
+            eldenring.exe.text+3B6802 - 0F2F E5               - comiss xmm4,xmm5
+            eldenring.exe.text+3B6805 - 76 0D                 - jna eldenring.exe.text+3B6814       ; NOP this too
+            eldenring.exe.text+3B6807 - 44 0F29 8E 50010000   - movaps [rsi+00000150],xmm9          ; NOP this
+            eldenring.exe.text+3B680F - E9 A8010000           - jmp eldenring.exe.text+3B69BC
+            eldenring.exe.text+3B6814 - 0FC6 DB 44            - shufps xmm3,xmm3,44
+        */
+        std::vector<uint16_t> pattern = { 0x0F, 0x2F, 0xE5, 0x76, 0x0D, 0x44, 0x0F, 0x29, 0x8E, 0x50, 0x01, 0x00, 0x00, 0xE9, 0xA8, 0x01, 0x00, 0x00, 0x0F, 0xC6, 0xDB, 0x44 };
+        //uintptr_t address = ModUtils::SigScan(pattern);
+        //if (address)
+        //{
+        //    /*const char* newbytes = "\x90\x0F\x29\x9E";
+        //    ModUtils::MemCopy(address + 5, (uintptr_t)newbytes, 4);*/
+        //    ModUtils::MemSet(address + 3, '\x90', 10);
+        //}
+
+        static UHookRelativeIntermediate hook(
+            pattern,
+            10,
+            &SetSideSwitch,
+            false,
+            3,
+            "HookSetSideSwitch"
+        );
+        hooks.push_back(hook);
+    }
+    
+    {
+        std::vector<uint16_t> pattern = { 0x0F, 0x2F, 0xE5, 0x76, 0x0D, 0x44, 0x0F, 0x29, 0x8E, 0x50, 0x01, 0x00, 0x00, 0xE9, 0xA8, 0x01, 0x00, 0x00, 0x0F, 0xC6, 0xDB, 0x44 };
+        static UHookRelativeIntermediate hook(
+            pattern,
+            5,
+            &SetSideSwitch,
+            -5,
+            "HookSetSideSwitch"
+        );
+        hooks.push_back(hook);
+    }
+
 #endif
 
     for (UHookRelativeIntermediate& hook : hooks)
@@ -1018,6 +1282,15 @@ DWORD WINAPI MainThread(LPVOID lpParam)
             {
                 hook.Toggle();
             }
+        }
+        if (ModUtils::CheckHotkey(0x71, ModUtils::HK_NONE, false, false))
+        {
+            std::cout << glm::to_string(PivotSpaceTargetPos) << std::endl;
+            std::cout << TargetXInterp << std::endl;
+        }
+        if (ModUtils::CheckHotkey(0x72, ModUtils::HK_NONE, false, false))
+        {
+            SideSwitch *= -1;
         }
         Sleep(2);
     }

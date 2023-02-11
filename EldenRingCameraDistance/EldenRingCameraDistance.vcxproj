@@ -184,6 +184,7 @@
     <MASM Include="camera.asm">
       <FileType>Document</FileType>
     </MASM>
+    <MASM Include="misc.asm" />
     <MASM Include="pivot.asm" />
   </ItemGroup>
   <ItemGroup>
@@ -191,6 +192,7 @@
     <None Include="..\doc\config.ini">
       <FileType>Document</FileType>
     </None>
+    <None Include="..\doc\config_testing.ini" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />

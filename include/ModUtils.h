@@ -402,7 +402,7 @@ namespace ModUtils
 	}
 
 	// Checks if a hotkey or a combination of hotkeys is pressed.
-	inline bool CheckHotkey(WORD key, WORD modifier = HK_NONE, bool checkController = false)
+	inline bool CheckHotkey(WORD key, WORD modifier = HK_NONE, bool checkController = false, bool logKey = true)
 	{
 		static std::vector<unsigned int> notReleasedKeys;
 		static bool retrievedWindowHandle = false;
@@ -487,7 +487,10 @@ namespace ModUtils
 			return false;
 		}
 
-		Log("Key: %i, modifier: %i", keyPressed, modifierPressed);
+		if (logKey)
+		{
+			Log("Key: %i, modifier: %i", keyPressed, modifierPressed);
+		}
 		notReleasedKeys.push_back(key);
 		return true;
 	}

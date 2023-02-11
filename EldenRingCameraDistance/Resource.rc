@@ -8,3 +8,4 @@
 //END
 
 IDR_CONFIGFILE TEXTFILE "..\\doc\\config.ini"
+IDR_CONFIGFILETESTING TEXTFILE "..\\doc\\config_testing.ini"

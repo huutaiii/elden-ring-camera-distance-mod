@@ -10,11 +10,15 @@ extern FoVMul : dword
 ; out
 extern PivotYaw : dword
 extern pvPivotPosition : xmmword
+extern pvPivotPositionNoInterp : xmmword
 extern pvTargetPosition : xmmword
 extern pvResolvedOffset : xmmword
 extern fCamMaxDistance : dword
 extern bHasTargetLock : byte
 extern TalkAddress : qword
+extern CamParamID : dword
+extern SideSwitchDelta : dword
+extern SideSwitchMax : dword
 
 ; in
 extern OffsetInterp : xmmword
@@ -105,8 +109,10 @@ extern TargetOffset : xmmword
 		;shufps xmm0,xmm0,93h
 		;movss dword ptr [PivotYaw],xmm0
 
-		movaps xmm1,[rsi+0D0h]
+		movaps xmm1,[rsi+0D0h]			; there are multiple similar vectors, imma just pick the middle one
 		movaps [pvPivotPosition],xmm1
+		movaps xmm1,[rsi+0B0h]
+		movaps [pvPivotPositionNoInterp],xmm1
 
 		movaps xmm1,[rsi+150h]
 		shufps xmm1,xmm1,93h
@@ -145,4 +151,15 @@ extern TargetOffset : xmmword
 		ret
 	SetTalkAddress endp
 
+	SetParamID proc
+		mov [CamParamID],edx
+		ret
+	SetParamID endp
+
+	SetSideSwitch proc
+		movss [SideSwitchDelta],xmm2	; stores x rotation?
+		movss [SideSwitchMax],xmm13
+		xorps xmm4,xmm4
+		ret
+	SetSideSwitch endp
 end
