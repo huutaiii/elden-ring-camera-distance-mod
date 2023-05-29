@@ -535,6 +535,28 @@ float hk_CamDist(PVOID* p)
     return tram_CamDist(p) * CameraDistanceMul + CameraDistanceAdd + CameraDistanceAddCtrl;
 }
 
+/*
+eldenring.exe+3B5FF4 - E8 C7562B00           - call eldenring.exe+66B6C0
+eldenring.exe+3B5FF9 - 44 0F28 D8            - movaps xmm11,xmm0
+eldenring.exe+3B5FFD - E8 AE562B00           - call eldenring.exe+66B6B0
+eldenring.exe+3B6002 - 44 0F28 E0            - movaps xmm12,xmm0
+eldenring.exe+3B6006 - E8 D5562B00           - call eldenring.exe+66B6E0
+eldenring.exe+3B600B - 44 0F28 C8            - movaps xmm9,xmm0
+eldenring.exe+3B600F - E8 DC642B00           - call eldenring.exe+66C4F0
+eldenring.exe+3B6014 - 45 0F2F E2            - comiss xmm12,xmm10
+eldenring.exe+3B6018 - 0FB6 F8               - movzx edi,al
+
+E8 ???????? 44 0F28 D8 E8 ???????? 44 0F28 E0 E8 ???????? 44 0F28 C8 ~~E8 ???????? 45 0F2F E2~~
+*/
+std::vector<UINT16> PATTERN_FN_CAMERA_DISTANIM = { 0xE8, MASK, MASK, MASK, MASK, 0x44, 0x0F, 0x28, 0xD8, 0xE8, MASK, MASK, MASK, MASK, 0x44, 0x0F, 0x28, 0xE0, 0xE8, MASK, MASK, MASK, MASK, 0x44, 0x0F, 0x28, 0xC8 };
+float (*tram_CamDistAnim)();
+
+float hk_CamDistAnim()
+{
+    float target = tram_CamDistAnim();
+    return target > 0.f ? target * CameraDistanceMul + CameraDistanceAdd + CameraDistanceAddCtrl : target;
+}
+
 //HHOOK MouseHookNext;
 //
 //LRESULT CALLBACK MouseHook(int nCode, WPARAM wParam, LPARAM lParam)
@@ -614,6 +636,20 @@ DWORD WINAPI MainThread(LPVOID lpParam)
             ModUtils::Log("Creating distance hook: %s", MH_StatusToString(mh));
             mh = MH_EnableHook(pTarget);
             ModUtils::Log("Enabling distance hook: %s", MH_StatusToString(mh));
+        }
+    }
+
+    {
+        UINT_PTR scan = ModUtils::SigScan(PATTERN_FN_CAMERA_DISTANIM, true, "FnCameraDistAnim");
+        if (scan)
+        {
+            int relAddr = *(int*)(scan + 1);
+            pTarget = LPVOID(scan + 5 + relAddr);
+            MH_STATUS mh;
+            mh = MH_CreateHook(pTarget, &hk_CamDistAnim, (LPVOID*)&tram_CamDistAnim);
+            ModUtils::Log("Creating animation hook: %s", MH_StatusToString(mh));
+            mh = MH_EnableHook(pTarget);
+            ModUtils::Log("Enabling animation hook: %s", MH_StatusToString(mh));
         }
     }
 
