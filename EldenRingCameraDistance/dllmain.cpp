@@ -3,12 +3,15 @@
 #include "../include/ModUtils.h"
 #include "../include/INIReader.h"
 #include "resource.h"
+#include "../include/MinHook.h"
 
 #include <vector>
 #include <xmmintrin.h>
 #include <iostream>
 #include <fstream>
 #include <cmath>
+
+#pragma comment(lib, "../bin/MinHook.x64.lib")
 
 constexpr unsigned int JMP_SIZE = 14;
 
@@ -46,11 +49,20 @@ struct {
     int increase;
     int decrease;
     int reset;
+    int wheel_mod;
 } KeyConfig;
 
 float DistanceCtrlDelta;
 float DistanceCtrlMin;
 float DistanceCtrlMax;
+
+bool bWheelCtrl;
+bool bWheelInvert;
+bool bWheelClick;
+bool bReadWheel = true;
+
+bool bUseFoVHook;
+bool bUseInterpHook;
 
 std::string GetDefaultConfig()
 {
@@ -112,6 +124,7 @@ void LoadConfig()
         float fovmul = reader.GetFloat("fov", "multiplier", 1.0f);
         ModUtils::Log("using fov multiplier = %f", fovmul);
         FoVMul = _mm_set_ss(fovmul);
+        bUseFoVHook = fovmul != 1.f;
 
         float follow_speed_multiplier = reader.GetFloat("camera_interpolation", "follow_speed_multiplier", 1.f);
         float speed_mul_z = reader.GetFloat("camera_interpolation", "follow_speed_multiplier_z", 0.f);
@@ -120,10 +133,16 @@ void LoadConfig()
         InterpSpeedMul = _mm_set_ss(follow_speed_multiplier);
         vInterpSpeedMul = (speed_mul_z > 0.f) ? _mm_setr_ps(follow_speed_multiplier, speed_mul_z, follow_speed_multiplier, 0.f)
             : _mm_setr_ps(follow_speed_multiplier, follow_speed_multiplier, follow_speed_multiplier, 0.f);
+        bUseInterpHook = follow_speed_multiplier != 1.f || (speed_mul_z != 1.f && speed_mul_z != 0.f);
 
         DistanceCtrlDelta = reader.GetFloat("camera_distance", "control_delta", 0.f);
         DistanceCtrlMin = reader.GetFloat("camera_distance", "control_min", -100.f);
         DistanceCtrlMax = reader.GetFloat("camera_distance", "control_max", 100.f);
+
+        bWheelCtrl = reader.GetBoolean("camera_distance", "use-mouse-wheel", false);
+        bWheelInvert = reader.GetBoolean("camera_distance", "invert-wheel", false);
+        bWheelClick = reader.GetBoolean("camera_distance", "wheel-click", false);
+        KeyConfig.wheel_mod = reader.GetInteger("camera_distance", "wheel-modifier", 0);
 
         KeyConfig.toggle = reader.GetInteger("keybind", "distance_toggle", 0);
         KeyConfig.increase = reader.GetInteger("keybind", "distance_increase", 0);
@@ -447,14 +466,14 @@ static decltype(ModUtils::MASKED) MASK = ModUtils::MASKED;
 //  F3 45 0F59 DF         - mulss xmm11,xmm15
 //  E8 18BF9000           - call eldenring.exe+CC0870
 //  48 8D 4C 24 20        - lea rcx,[rsp+20]
-std::vector<uint16_t> PATTERN_DISTANCE = { 0x8D, MASK, MASK, MASK, MASK, 0x0F, 0x28, MASK, MASK, MASK, 0x0F, 0x59, MASK, 0xE8, MASK, MASK, MASK, MASK, MASK, 0x8D, MASK, 0x24, MASK };
-UHookRelativeIntermediate HookCameraDistance(
-    PATTERN_DISTANCE/*std::vector<uint16_t>({ 0x48, 0x8D, 0x4C, 0x24, 0x20, 0x44, 0x0F, 0x28, 0xD8, 0xF3, 0x45, 0x0F, 0x59, 0xDF })*/,
-    5,
-    &CameraDistanceAlt,
-    -1,
-    "HookCameraDistance"
-);
+//std::vector<uint16_t> PATTERN_DISTANCE = { 0x8D, MASK, MASK, MASK, MASK, 0x0F, 0x28, MASK, MASK, MASK, 0x0F, 0x59, MASK, 0xE8, MASK, MASK, MASK, MASK, MASK, 0x8D, MASK, 0x24, MASK };
+//UHookRelativeIntermediate HookCameraDistance(
+//    PATTERN_DISTANCE/*std::vector<uint16_t>({ 0x48, 0x8D, 0x4C, 0x24, 0x20, 0x44, 0x0F, 0x28, 0xD8, 0xF3, 0x45, 0x0F, 0x59, 0xDF })*/,
+//    5,
+//    &CameraDistanceAlt,
+//    -1,
+//    "HookCameraDistance"
+//);
 
 //    |
 //    v
@@ -490,6 +509,85 @@ UHookRelativeIntermediate HookFoVMul(
     "HookFoVMul"
 );
 
+/*
+eldenring.exe+3B5C7A - E8 51379500           - call eldenring.exe+D093D0
+eldenring.exe+3B5C7F - 48 8D 4C 24 20        - lea rcx,[rsp+20]
+eldenring.exe+3B5C84 - 0F28 F8               - movaps xmm7,xmm0
+eldenring.exe+3B5C87 - E8 24399500           - call eldenring.exe+D095B0
+eldenring.exe+3B5C8C - F3 44 0F10 3D C7D0E802  - movss xmm15,[eldenring.exe+3242D5C]
+
+E8 ??????00 48 8D 4C 24 ?? 0F28 F8 E8 ??????00 F3 44 0F10 3D ????????
+*/
+std::vector<UINT16> PATTERN_FN_CAMERA_DISTANCE = { 0xE8, MASK, MASK, MASK, 0x00, 0x48, 0x8D, 0x4C, 0x24, MASK, 0x0F, 0x28, 0xF8, 0xE8, MASK, MASK, MASK, 0x00, 0xF3, 0x44, 0x0F, 0x10, 0x3D, MASK, MASK, MASK, MASK };
+float (*tram_CamDist)(PVOID* p);
+
+int PendingZoom = 0;
+
+float hk_CamDist(PVOID* p)
+{
+    if (PendingZoom)
+    {
+        CameraDistanceAddCtrl += (PendingZoom > 0 ? 1 : -1) * DistanceCtrlDelta;
+        CameraDistanceAddCtrl = min(CameraDistanceAddCtrl, DistanceCtrlMax);
+        CameraDistanceAddCtrl = max(CameraDistanceAddCtrl, DistanceCtrlMin);
+        PendingZoom = 0;
+    }
+    return tram_CamDist(p) * CameraDistanceMul + CameraDistanceAdd + CameraDistanceAddCtrl;
+}
+
+//HHOOK MouseHookNext;
+//
+//LRESULT CALLBACK MouseHook(int nCode, WPARAM wParam, LPARAM lParam)
+//{
+//    if (nCode < 0)
+//    {
+//        CallNextHookEx(MouseHookNext, nCode, wParam, lParam);
+//    }
+//
+//    ModUtils::Log("aaaaaa");
+//    if (nCode == HC_ACTION)
+//    {
+//        auto msg = wParam;
+//        MSLLHOOKSTRUCT *data = (MSLLHOOKSTRUCT*)lParam;
+//        if (msg == WM_MOUSEWHEEL)
+//        {
+//            WORD wheel = data->mouseData >> 16;
+//            ModUtils::Log("mouse wheel %d", wheel);
+//        }
+//    }
+//    return CallNextHookEx(MouseHookNext, nCode, wParam, lParam);
+//}
+
+WNDPROC WndProc;
+
+LRESULT WINAPI HookWndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    //ModUtils::Log("wndproc called");
+    if (msg == WM_MOUSEWHEEL)
+    {
+        if (KeyConfig.wheel_mod)
+        {
+            SHORT key = GetAsyncKeyState(KeyConfig.wheel_mod);
+            if (key >> (sizeof(short) * CHAR_BIT - 1) != 0)
+            {
+                short wheel = HIWORD(wparam);
+                PendingZoom = bWheelInvert ? -wheel : wheel;
+            }
+        }
+        else
+        {
+            short wheel = HIWORD(wparam);
+            PendingZoom = bWheelInvert ? -wheel : wheel;
+        }
+        //ModUtils::Log("wheel: %d %d", wheel, PendingZoom);
+    }
+    if (bWheelClick && msg == WM_MBUTTONDOWN)
+    {
+        CameraDistanceAddCtrl = 0;
+    }
+    return CallWindowProcA(WndProc, hWnd, msg, wparam, lparam);
+}
+
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
     //MEMORY_BASIC_INFORMATION meminfo;
@@ -498,18 +596,74 @@ DWORD WINAPI MainThread(LPVOID lpParam)
     //    ModUtils::Log("meminfo: %p %p %u %u %u", meminfo.BaseAddress, meminfo.AllocationBase, meminfo.RegionSize, meminfo.Type, meminfo.Protect);
     //}
     LoadConfig();
-    HookCameraDistance.Enable();
-    HookPivotInterp.Enable();
-    HookFoVMul.Enable();
 
-    int counter = 0;
+    LoadLibraryA("mods\\bin\\MinHook.x64.dll");
+    MH_Initialize();
 
-    while (true)
+    LPVOID pTarget = nullptr;
+
+    //if (bWheelCtrl) // ???
+    {
+        UINT_PTR scan = ModUtils::SigScan(PATTERN_FN_CAMERA_DISTANCE, true, "FnCameraDistance");
+        if (scan)
+        {
+            int relAddr = *(int*)(scan + 1);
+            pTarget = LPVOID(scan + 5 + relAddr);
+            MH_STATUS mh;
+            mh = MH_CreateHook(pTarget, &hk_CamDist, (LPVOID*)&tram_CamDist);
+            ModUtils::Log("Creating distance hook: %s", MH_StatusToString(mh));
+            mh = MH_EnableHook(pTarget);
+            ModUtils::Log("Enabling distance hook: %s", MH_StatusToString(mh));
+        }
+    }
+
+    //HookCameraDistance.Enable();
+    if (bUseFoVHook)
+    {
+        HookFoVMul.Enable();
+    }
+    if (bUseInterpHook)
+    {
+        HookPivotInterp.Enable();
+    }
+
+    //MouseHookNext = SetWindowsHookExA(WH_MOUSE_LL, &MouseHook, (HMODULE)ModUtils::GetProcessBaseAddress(GetCurrentProcessId()), 0);
+    //ModUtils::Log("Mouse hook result: %p %d", MouseHookNext, GetLastError());
+
+    //ModUtils::CloseLog();
+
+    if (bWheelCtrl)
+    {
+        int counter = 0;
+
+        while (WndProc == NULL && counter < 50)
+        {
+            ModUtils::Log("attempting to hook WNDPROC %d", counter);
+            ModUtils::GetWindowHandle();
+            //if (ModUtils::GetWindowHandle())
+            //{
+            //    WndProc = (WNDPROC)GetWindowLongPtrA(ModUtils::muWindow, GWLP_WNDPROC);
+            //    ModUtils::Log("Get WNDPROC: %p", WndProc);
+            //}
+            SetLastError(0);
+            WndProc = (WNDPROC)SetWindowLongPtrA(ModUtils::muWindow, GWLP_WNDPROC, (LONG_PTR)&HookWndProc);
+            ModUtils::Log("hook wndproc %p %d", WndProc, GetLastError());
+
+            counter++;
+            Sleep(100);
+        }
+    }
+
+    bool bEnabled = true;
+
+    while (pTarget != nullptr)
     {
         //printf("checking hotkey %d", counter);
         if (KeyConfig.toggle && ModUtils::CheckHotkey(KeyConfig.toggle))
         {
-            HookCameraDistance.Toggle();
+            bEnabled = !bEnabled;
+            bEnabled ? MH_EnableHook(pTarget) : MH_DisableHook(pTarget);
+            //HookCameraDistance.Toggle();
         }
         if (KeyConfig.increase && ModUtils::CheckHotkey(KeyConfig.increase))
         {

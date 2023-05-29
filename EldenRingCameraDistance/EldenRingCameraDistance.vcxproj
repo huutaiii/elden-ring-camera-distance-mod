@@ -149,6 +149,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>MinHook.x64.dll</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
       <Command>powershell.exe -File $(SolutionDir)install.ps1 -SolutionDir $(SolutionDir) -TargetName $(ProjectName) -Configuration $(ConfigurationName) -Platform $(PlatformName)</Command>
@@ -171,9 +172,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />
-    <None Include="..\doc\config.ini">
+    <CopyFileToFolders Include="..\doc\config.ini">
       <FileType>Document</FileType>
-    </None>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)$(ProjectName)\</DestinationFolders>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)$(ProjectName)\</DestinationFolders>
+    </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />

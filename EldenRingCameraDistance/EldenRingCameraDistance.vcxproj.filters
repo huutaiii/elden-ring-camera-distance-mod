@@ -43,9 +43,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />
-    <None Include="..\doc\config.ini">
-      <Filter>Resource Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">
@@ -57,5 +54,10 @@
     <Text Include="..\doc\ce_asm_pivot_interpolation.txt" />
     <Text Include="..\doc\ce_asm_gamethread.txt" />
     <Text Include="..\doc\disasm_fov.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\doc\config.ini">
+      <Filter>Resource Files</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>
